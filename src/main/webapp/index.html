@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Recreational Spaces Navigator | Explore</title>
+    <meta name="description" content="Explore recreational spaces, check what is available now, and see what is happening nearby.">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/index.css">
+    
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">S</div>
+            <span>Spaces Navigator</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="active">Explore</a>
+            <a href="#">Events</a>
+            <a href="#">My activity</a>
+        </nav>
+        <div class="auth-buttons">
+            <button class="btn btn-secondary">Sign in</button>
+            <button class="btn btn-primary">Create account</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        
+        <!-- Hero & Filters -->
+        <section class="hero-section">
+            <div class="hero">
+                <h1>Find a space that works for you.</h1>
+                <p>
+                    <span>Explore recreational spaces, check what is available now, and see what is happening nearby.</span>
+                    <span class="timestamp" id="live-timestamp">Updated just now &middot; public information</span>
+                </p>
+            </div>
+            
+            <div class="filters">
+                <input type="text" class="search-bar" placeholder="Search facilities, spaces, or activities" aria-label="Search">
+                
+                <!-- Filter Dropdown Simulation -->
+                <button class="filter-chip">All areas <span style="font-size: 0.8em; margin-left: 4px;">▼</span></button>
+                
+                <!-- Filter Toggle Buttons -->
+                <button class="filter-chip active">Open now</button>
+                <button class="filter-chip">Reservable</button>
+                <button class="filter-chip">Open-play</button>
+                <button class="filter-chip">Events today</button>
+            </div>
+        </section>
+
+        <!-- Main Grid: Map & Panel -->
+        <section class="content-grid">
+            
+            <!-- Map Area -->
+            <div class="map-container">
+                <div id="map"></div>
+                <!-- Map Legend overlay -->
+                <div class="map-legend">
+                    <div class="legend-item"><div class="indicator open"></div> Open</div>
+                    <div class="legend-item"><div class="indicator limited"></div> Limited</div>
+                    <div class="legend-item"><div class="indicator closed"></div> Closed</div>
+                </div>
+            </div>
+
+            <!-- Selected Facility Panel -->
+            <aside class="side-panel">
+                <div class="panel-header">
+                    <div class="subtitle">
+                        Selected Facility
+                        <span class="status-badge">Open now</span>
+                    </div>
+                    <h2>Central Recreation Center</h2>
+                    <p class="address">120 Civic Way &middot; 0.8 mi away</p>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat">
+                        <span class="stat-value">8</span>
+                        <span class="stat-label">spaces available</span>
+                    </div>
+                    <div class="stat stat-right">
+                        <span class="stat-value" style="color: #4caf50;">Mixed access</span>
+                        <span class="stat-label">Until 10:00 PM</span>
+                    </div>
+                </div>
+
+                <div class="space-list">
+                    <div class="space-item">
+                        <span>Indoor basketball court A</span>
+                        <span class="space-status available">Available</span>
+                    </div>
+                    <div class="space-item">
+                        <span>Fitness studio</span>
+                        <span class="space-status available">Available</span>
+                    </div>
+                    <div class="space-item">
+                        <span>Community room</span>
+                        <span class="space-status reserved">Reserved at 6:00 PM</span>
+                    </div>
+                </div>
+
+                <div class="events-section">
+                    <div class="events-header">
+                        <h3>Upcoming public events</h3>
+                        <a href="#" style="font-size: 0.85rem; font-weight: 500;">View full schedule</a>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="month">Sep</span>
+                            <span class="day">24</span>
+                        </div>
+                        <div class="event-details">
+                            <h4>Community pickup basketball</h4>
+                            <p>6:00 PM &middot; Indoor court A</p>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="month">Sep</span>
+                            <span class="day">27</span>
+                        </div>
+                        <div class="event-details">
+                            <h4>Beginner strength workshop</h4>
+                            <p>10:00 AM &middot; Fitness studio</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full-width">View facility details</button>
+            </aside>
+            
+        </section>
+
+        <!-- Lower Information Area -->
+        <section class="lower-area">
+            
+            <div class="nearby-section">
+                <div class="section-header">
+                    <h3>Nearby right now</h3>
+                    <a href="#" style="font-size: 0.85rem; font-weight: 500;">View all facilities</a>
+                </div>
+                <div class="cards-grid">
+                    <div class="card">
+                        <h4>Northside Fieldhouse</h4>
+                        <p>Open &middot; 12 spaces</p>
+                    </div>
+                    <div class="card">
+                        <h4>Riverside Courts</h4>
+                        <p>Limited &middot; 2 spaces</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="upcoming-section">
+                <div class="section-header">
+                    <h3>Events coming up</h3>
+                    <a href="#" style="font-size: 0.85rem; font-weight: 500;">Browse events</a>
+                </div>
+                <div class="cards-grid">
+                    <div class="card">
+                        <h4>Outdoor yoga</h4>
+                        <p>Tomorrow &middot; Riverside</p>
+                    </div>
+                    <div class="card">
+                        <h4>Open swim</h4>
+                        <p>Friday &middot; Aquatics</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- Custom Application JS -->
+    <script src="js/index.js"></script>
+</body>
+</html>
