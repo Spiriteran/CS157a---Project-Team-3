@@ -34,7 +34,7 @@ public class HomeServlet extends HttpServlet {
     private static final String SQL_PORT = "3306";      // Default port is 3306
     private static final String DATABASE = "recreation_navigator";
     private static final String USERNAME = "root";
-    private static final String PASSWORD = "1aBCD23$";
+    private static final String PASSWORD = "password";
 
     private static final String URL =
             "jdbc:mysql://" + HOSTNAME + ":" + SQL_PORT + "/" + DATABASE +
