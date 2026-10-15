@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create account | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+        </div>
+    </div>
+</header>
+
+<main class="page" style="max-width:520px;">
+    <div class="page-head" style="text-align:center;">
+        <h1>Create your account</h1>
+        <p>Join to favorite spaces, join events, and (for reservation users) book time.</p>
+    </div>
+
+    <section class="card card-pad">
+        <div class="demo-note">Demo only — account creation is not wired to the backend this round. Shown to illustrate the planned sign-up flow.</div>
+        <form onsubmit="event.preventDefault(); document.getElementById('msg').style.display='block';">
+            <div class="field">
+                <label for="email">Email address</label>
+                <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Choose a password" autocomplete="off">
+            </div>
+            <div class="field">
+                <label for="confirm">Confirm password</label>
+                <input type="password" id="confirm" placeholder="Re-enter your password" autocomplete="off">
+            </div>
+            <div class="field">
+                <label for="role">Account type</label>
+                <select id="role">
+                    <option value="GENERAL_USER">General user — browse, favorite, join events, comment</option>
+                    <option value="RESERVATION_USER">Reservation user — also reserve spaces (needs 2FA + billing)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        </form>
+        <p id="msg" style="display:none;margin-top:1rem;font-size:.88rem;text-align:center;color:var(--text-muted);">
+            This is a mock screen — no account is saved.
+            Try the live guest features on <a href="explore.html">Explore</a> or <a href="events.html">Events</a>.
+        </p>
+        <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
+            Already have an account? <a href="login.html">Sign in</a>
+        </p>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+</body>
+</html>

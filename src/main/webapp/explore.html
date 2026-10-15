@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Spaces | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html" class="active">Explore</a>
+            <a href="events.html">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="register.html">Create account</a>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="page-head">
+        <h1>Explore spaces</h1>
+        <p>Search facilities by city and type, open a space for details, and see how each one can be used.</p>
+    </div>
+
+    <div class="guest-banner">
+        <span>&#128065;</span>
+        <span><strong>Guest view</strong> &middot; FR-1 (search &amp; filter), FR-2 (space details), and FR-5 (access modes), live from the database. No account required.</span>
+    </div>
+
+    <div class="split">
+        <!-- Left: filters + results -->
+        <div>
+            <section class="card card-pad" style="margin-bottom:1.5rem;">
+                <h2 style="font-size:1.1rem;margin-bottom:1rem;">Find facilities <span class="badge slate">FR-1</span></h2>
+                <div class="controls">
+                    <div class="field">
+                        <label for="city">City</label>
+                        <input type="text" id="city" value="San Jose">
+                    </div>
+                    <div class="field">
+                        <label for="type">Space type</label>
+                        <input type="text" id="type" value="Basketball Court">
+                    </div>
+                    <button class="btn btn-primary" onclick="runSearch()">Search</button>
+                </div>
+                <div id="search-result" style="margin-top:1rem;"></div>
+            </section>
+
+            <section class="card card-pad">
+                <h2 style="font-size:1.1rem;margin-bottom:1rem;">All active spaces &amp; access modes <span class="badge slate">FR-5</span></h2>
+                <div id="spaces-result"></div>
+            </section>
+        </div>
+
+        <!-- Right: map placeholder -->
+        <div>
+            <div class="map-placeholder">
+                <div class="note">
+                    <strong>Interactive map</strong>
+                    <span>The live map lives here in the Explore view (never on the home page). Coming in a later round.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Space detail modal (FR-2) -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this) closeModal()">
+    <div class="modal">
+        <div class="modal-head">
+            <h2 id="modal-title">Space details</h2>
+            <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p>Guest functional requirements, live against <code>city_recreation</code>.</p>
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+<script src="js/fr-api.js"></script>
+<script>
+    const ACCESS_BADGE = {
+        'OPEN_PLAY': 'green',
+        'PAY_TO_PLAY': 'amber',
+        'RESERVATION_ONLY': 'slate'
+    };
+
+    // FR-1: search & filter facilities
+    async function runSearch() {
+        const el = document.getElementById('search-result');
+        el.innerHTML = '<p class="result-meta">Searching...</p>';
+        const data = await fetchFr(1, {
+            city: document.getElementById('city').value,
+            space_type: document.getElementById('type').value
+        });
+        renderTable(el, data);
+    }
+
+    // FR-5: all active spaces with access-mode labels, as cards
+    async function loadSpaces() {
+        const el = document.getElementById('spaces-result');
+        el.innerHTML = '<p class="result-meta">Loading...</p>';
+        const data = await fetchFr(5);
+        renderCards(el, data, row => {
+            const badge = ACCESS_BADGE[row['access_mode']] || 'slate';
+            const price = Number(row['price']) > 0 ? ('$' + row['price']) : 'Free';
+            return `
+                <div class="tile" onclick="showDetails(${esc(row['space_id'])})">
+                    <h3>${esc(row['space_name'])}</h3>
+                    <div class="meta">${esc(row['facility_name'])}</div>
+                    <div style="margin-top:.6rem;display:flex;justify-content:space-between;align-items:center;">
+                        <span class="badge ${badge}">${esc(row['access_label'])}</span>
+                        <span class="meta">${esc(price)}</span>
+                    </div>
+                    <div style="margin-top:.6rem;font-size:.82rem;">
+                        <a href="availability.html?space_id=${esc(row['space_id'])}"
+                           onclick="event.stopPropagation()">Check availability &rarr;</a>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // FR-2: full detail for one space, in a modal
+    async function showDetails(spaceId) {
+        const modal = document.getElementById('modal');
+        const body = document.getElementById('modal-body');
+        document.getElementById('modal-title').textContent = 'Space details';
+        body.innerHTML = '<p class="result-meta">Loading...</p>';
+        modal.classList.add('open');
+
+        const data = await fetchFr(2, { space_id: spaceId });
+        if (data.error) { body.innerHTML = '<p class="err-state">' + esc(data.error) + '</p>'; return; }
+        if (!data.rows || data.rows.length === 0) { body.innerHTML = '<p class="empty-state">No such space.</p>'; return; }
+
+        const r = data.rows[0];
+        document.getElementById('modal-title').textContent = r['space_name'];
+        const price = Number(r['price']) > 0 ? ('$' + r['price']) : 'Free';
+        const rows = [
+            ['Type', r['space_type']],
+            ['Access mode', r['access_mode']],
+            ['Price', price],
+            ['Facility', r['facility_name']],
+            ['Address', r['address']],
+            ['City', r['city_name'] + ', ' + r['state']]
+        ];
+        body.innerHTML =
+            rows.map(([k, v]) => `<div class="detail-row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')
+            + `<div style="margin-top:1.2rem;"><a class="btn btn-primary btn-block" href="availability.html?space_id=${esc(r['space_id'])}">Check availability</a></div>`
+            + sqlDetails(data.sql);
+    }
+
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    window.addEventListener('DOMContentLoaded', () => { runSearch(); loadSpaces(); });
+</script>
+</body>
+</html>

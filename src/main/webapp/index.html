@@ -3,201 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>City Recreational Spaces Navigator | Guest View</title>
-    <meta name="description" content="Guest view: test the five functional requirements against the live city_recreation database.">
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-            margin: 0; background: #f6faf7; color: #1f2933;
-        }
-        header {
-            background: linear-gradient(135deg, #1b5e20, #43a047);
-            color: #fff; padding: 2rem 1.5rem; text-align: center;
-        }
-        header h1 { margin: 0 0 .4rem; font-size: 1.8rem; }
-        header p { margin: 0; color: #e8f5e9; }
-        main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
-        .fr-card {
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-            margin-bottom: 1.5rem; overflow: hidden;
-        }
-        .fr-head {
-            padding: 1rem 1.25rem; border-bottom: 1px solid #eef2f1;
-            display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
-        }
-        .fr-head h2 { margin: 0; font-size: 1.1rem; flex: 1 1 260px; }
-        .fr-body { padding: 1.25rem; }
-        .controls { display: flex; flex-wrap: wrap; gap: .6rem; align-items: end; margin-bottom: 1rem; }
-        .controls label { display: flex; flex-direction: column; font-size: .8rem; color: #475569; gap: .25rem; }
-        .controls input {
-            padding: .5rem .6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: .9rem; min-width: 150px;
-        }
-        button {
-            background: #2e7d32; color: #fff; border: none; border-radius: 7px;
-            padding: .55rem 1.1rem; font-size: .9rem; font-weight: 600; cursor: pointer;
-        }
-        button:hover { background: #1b5e20; }
-        table { border-collapse: collapse; width: 100%; font-size: .88rem; }
-        th, td { border: 1px solid #e2e8f0; padding: .5rem .65rem; text-align: left; }
-        th { background: #f1f5f9; font-weight: 600; }
-        tr:nth-child(even) td { background: #fafcfb; }
-        .meta { font-size: .8rem; color: #64748b; margin: .25rem 0 .75rem; }
-        .empty { color: #94a3b8; font-style: italic; }
-        .err { color: #b3261e; font-weight: 600; }
-        details { margin-top: .6rem; }
-        summary { cursor: pointer; color: #2563eb; font-size: .82rem; }
-        pre { background: #0f172a; color: #e2e8f0; padding: .8rem; border-radius: 6px;
-              overflow-x: auto; font-size: .78rem; white-space: pre-wrap; }
-        .badge { display:inline-block; background:#e8f5e9; color:#1b5e20; font-size:.7rem;
-                 font-weight:700; padding:2px 8px; border-radius:12px; }
-    </style>
+    <title>City Recreational Spaces Navigator</title>
+    <meta name="description" content="Find and reserve city recreational spaces. Browse public events and the community forum.">
+    <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-<header>
-    <h1>&#127795; City Recreational Spaces Navigator</h1>
-    <p>Guest View &middot; Five functional requirements, live against <code>city_recreation</code></p>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="register.html">Create account</a>
+        </div>
+    </div>
 </header>
 
-<main>
-    <!-- FR-1 -->
-    <section class="fr-card" id="fr1">
-        <div class="fr-head">
-            <h2>FR-1 &middot; Search &amp; filter facilities</h2>
-            <span class="badge">guest</span>
-        </div>
-        <div class="fr-body">
-            <div class="controls">
-                <label>City <input type="text" id="fr1-city" value="San Jose"></label>
-                <label>Space type <input type="text" id="fr1-type" value="Basketball Court"></label>
-                <button onclick="runFr1()">Search</button>
-            </div>
-            <div id="fr1-result"></div>
-        </div>
+<main class="page">
+
+    <section class="hero">
+        <h1>Welcome to the Navigator</h1>
+        <p>Discover local recreational spaces, join community events, and take part in
+           public discussions. Sign in to reserve, or explore as a guest.</p>
     </section>
 
-    <!-- FR-2 -->
-    <section class="fr-card" id="fr2">
-        <div class="fr-head">
-            <h2>FR-2 &middot; View space details</h2>
-            <span class="badge">guest</span>
-        </div>
-        <div class="fr-body">
-            <div class="controls">
-                <label>Space ID <input type="number" id="fr2-id" value="3" min="1"></label>
-                <button onclick="runFr2()">View</button>
-            </div>
-            <div id="fr2-result"></div>
-        </div>
-    </section>
+    <div class="split">
 
-    <!-- FR-3 -->
-    <section class="fr-card" id="fr3">
-        <div class="fr-head">
-            <h2>FR-3 &middot; View availability by time slot</h2>
-            <span class="badge">guest</span>
-        </div>
-        <div class="fr-body">
-            <div class="controls">
-                <label>Space ID <input type="number" id="fr3-id" value="1" min="1"></label>
-                <button onclick="runFr3()">Check availability</button>
-            </div>
-            <div id="fr3-result"></div>
-        </div>
-    </section>
+        <!-- Login panel (mock) -->
+        <section class="card card-pad">
+            <h2 style="font-size:1.25rem;margin-bottom:1rem;">Member sign in</h2>
+            <div class="demo-note">Demo only — sign-in is not wired to the backend this round.</div>
+            <form onsubmit="event.preventDefault(); return false;">
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Your password" autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+            </form>
+            <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
+                New here? <a href="register.html">Create an account</a>
+            </p>
+            <p style="margin-top:.5rem;font-size:.85rem;text-align:center;color:var(--text-muted);">
+                No account needed to <a href="explore.html">explore spaces</a> or
+                <a href="events.html">view public events</a>.
+            </p>
+        </section>
 
-    <!-- FR-4 -->
-    <section class="fr-card" id="fr4">
-        <div class="fr-head">
-            <h2>FR-4 &middot; View public events</h2>
-            <span class="badge">guest</span>
-        </div>
-        <div class="fr-body">
-            <div class="controls">
-                <button onclick="runFr4()">Load public events</button>
+        <!-- Community forum preview (mock) -->
+        <section class="card card-pad">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;">
+                <h2 style="font-size:1.25rem;">Community forum</h2>
+                <span class="badge slate">preview</span>
             </div>
-            <div id="fr4-result"></div>
-        </div>
-    </section>
 
-    <!-- FR-5 -->
-    <section class="fr-card" id="fr5">
-        <div class="fr-head">
-            <h2>FR-5 &middot; Access-mode labels</h2>
-            <span class="badge">guest</span>
-        </div>
-        <div class="fr-body">
-            <div class="controls">
-                <button onclick="runFr5()">Load access modes</button>
-            </div>
-            <div id="fr5-result"></div>
-        </div>
-    </section>
+            <article class="thread">
+                <h3>Saturday morning basketball tourney</h3>
+                <p>Looking for 2 more players for our 5v5 pickup game this Saturday at Central Park Gym.</p>
+                <div class="byline">Posted by user89 &middot; 2 hours ago</div>
+            </article>
+
+            <article class="thread">
+                <h3>Beginner yoga in the park</h3>
+                <p>Relaxing beginner-friendly session at Mitchell Park. Bring your own mat.</p>
+                <div class="byline">Posted by wellnessgroup &middot; 5 hours ago</div>
+            </article>
+
+            <article class="thread">
+                <h3>Tennis court maintenance update</h3>
+                <p>Courts 1 and 2 at Rivermark will be closed for resurfacing next Tuesday.</p>
+                <div class="byline">Posted by city_admin &middot; 1 day ago</div>
+            </article>
+
+            <button class="btn btn-ghost btn-block" disabled
+                    title="Forum posting is not implemented this round">
+                View all discussions
+            </button>
+        </section>
+
+    </div>
 </main>
 
-<script>
-    function renderResult(targetId, data) {
-        const el = document.getElementById(targetId);
-        if (data.error) {
-            el.innerHTML = '<p class="err">' + escapeHtml(data.error) + '</p>';
-            return;
-        }
-        let html = '<p class="meta">' + data.rowCount + ' row(s) returned.</p>';
-        if (!data.rows || data.rows.length === 0) {
-            html += '<p class="empty">No rows matched.</p>';
-        } else {
-            html += '<div style="overflow-x:auto"><table><thead><tr>';
-            data.columns.forEach(c => html += '<th>' + escapeHtml(c) + '</th>');
-            html += '</tr></thead><tbody>';
-            data.rows.forEach(row => {
-                html += '<tr>';
-                data.columns.forEach(c => {
-                    const v = row[c];
-                    html += '<td>' + (v === null || v === undefined ? '<span class="empty">NULL</span>' : escapeHtml(v)) + '</td>';
-                });
-                html += '</tr>';
-            });
-            html += '</tbody></table></div>';
-        }
-        html += '<details><summary>Show SQL</summary><pre>' + escapeHtml(data.sql || '') + '</pre></details>';
-        el.innerHTML = html;
-    }
+<footer class="site-footer">
+    <div class="inner">
+        <p><strong>For the grader:</strong> the five guest functional requirements are
+           live against the <code>city_recreation</code> database and need no account.</p>
+        <p>FR-1, FR-2, FR-5 &rarr; <a href="explore.html">Explore</a> &nbsp;|&nbsp;
+           FR-3 &rarr; <a href="availability.html">Availability</a> &nbsp;|&nbsp;
+           FR-4 &rarr; <a href="events.html">Events</a></p>
+        <p style="color:var(--text-faint);margin-top:.5rem;">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
 
-    function fetchFr(targetId, params) {
-        const el = document.getElementById(targetId);
-        el.innerHTML = '<p class="meta">Loading...</p>';
-        fetch('api/fr?' + params)
-            .then(r => r.json())
-            .then(d => renderResult(targetId, d))
-            .catch(e => el.innerHTML = '<p class="err">Request failed: ' + escapeHtml(e.message) + '</p>');
-    }
-
-    function runFr1() {
-        const city = encodeURIComponent(document.getElementById('fr1-city').value);
-        const type = encodeURIComponent(document.getElementById('fr1-type').value);
-        fetchFr('fr1-result', 'fr=1&city=' + city + '&space_type=' + type);
-    }
-    function runFr2() {
-        const id = encodeURIComponent(document.getElementById('fr2-id').value);
-        fetchFr('fr2-result', 'fr=2&space_id=' + id);
-    }
-    function runFr3() {
-        const id = encodeURIComponent(document.getElementById('fr3-id').value);
-        fetchFr('fr3-result', 'fr=3&space_id=' + id);
-    }
-    function runFr4() { fetchFr('fr4-result', 'fr=4'); }
-    function runFr5() { fetchFr('fr5-result', 'fr=5'); }
-
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    // Auto-run all five on load so the page is populated immediately.
-    window.addEventListener('DOMContentLoaded', () => {
-        runFr1(); runFr2(); runFr3(); runFr4(); runFr5();
-    });
-</script>
 </body>
 </html>
