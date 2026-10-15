@@ -1,192 +1,203 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>City Recreational Spaces Navigator | Explore</title>
-    <meta name="description" content="Explore recreational spaces, check what is available now, and see what is happening nearby.">
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/index.css">
-    
-    <!-- Leaflet CSS for Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <title>City Recreational Spaces Navigator | Guest View</title>
+    <meta name="description" content="Guest view: test the five functional requirements against the live city_recreation database.">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            margin: 0; background: #f6faf7; color: #1f2933;
+        }
+        header {
+            background: linear-gradient(135deg, #1b5e20, #43a047);
+            color: #fff; padding: 2rem 1.5rem; text-align: center;
+        }
+        header h1 { margin: 0 0 .4rem; font-size: 1.8rem; }
+        header p { margin: 0; color: #e8f5e9; }
+        main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+        .fr-card {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            margin-bottom: 1.5rem; overflow: hidden;
+        }
+        .fr-head {
+            padding: 1rem 1.25rem; border-bottom: 1px solid #eef2f1;
+            display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
+        }
+        .fr-head h2 { margin: 0; font-size: 1.1rem; flex: 1 1 260px; }
+        .fr-body { padding: 1.25rem; }
+        .controls { display: flex; flex-wrap: wrap; gap: .6rem; align-items: end; margin-bottom: 1rem; }
+        .controls label { display: flex; flex-direction: column; font-size: .8rem; color: #475569; gap: .25rem; }
+        .controls input {
+            padding: .5rem .6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: .9rem; min-width: 150px;
+        }
+        button {
+            background: #2e7d32; color: #fff; border: none; border-radius: 7px;
+            padding: .55rem 1.1rem; font-size: .9rem; font-weight: 600; cursor: pointer;
+        }
+        button:hover { background: #1b5e20; }
+        table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+        th, td { border: 1px solid #e2e8f0; padding: .5rem .65rem; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; }
+        tr:nth-child(even) td { background: #fafcfb; }
+        .meta { font-size: .8rem; color: #64748b; margin: .25rem 0 .75rem; }
+        .empty { color: #94a3b8; font-style: italic; }
+        .err { color: #b3261e; font-weight: 600; }
+        details { margin-top: .6rem; }
+        summary { cursor: pointer; color: #2563eb; font-size: .82rem; }
+        pre { background: #0f172a; color: #e2e8f0; padding: .8rem; border-radius: 6px;
+              overflow-x: auto; font-size: .78rem; white-space: pre-wrap; }
+        .badge { display:inline-block; background:#e8f5e9; color:#1b5e20; font-size:.7rem;
+                 font-weight:700; padding:2px 8px; border-radius:12px; }
+    </style>
 </head>
 <body>
+<header>
+    <h1>&#127795; City Recreational Spaces Navigator</h1>
+    <p>Guest View &middot; Five functional requirements, live against <code>city_recreation</code></p>
+</header>
 
-    <!-- Top Navigation -->
-    <header>
-        <div class="logo-area">
-            <div class="logo-icon">S</div>
-            <span>Spaces Navigator</span>
+<main>
+    <!-- FR-1 -->
+    <section class="fr-card" id="fr1">
+        <div class="fr-head">
+            <h2>FR-1 &middot; Search &amp; filter facilities</h2>
+            <span class="badge">guest</span>
         </div>
-        <nav class="nav-links">
-            <a href="#" class="active">Explore</a>
-            <a href="#">Events</a>
-            <a href="#">My activity</a>
-        </nav>
-        <div class="auth-buttons">
-            <button class="btn btn-secondary">Sign in</button>
-            <button class="btn btn-primary">Create account</button>
+        <div class="fr-body">
+            <div class="controls">
+                <label>City <input type="text" id="fr1-city" value="San Jose"></label>
+                <label>Space type <input type="text" id="fr1-type" value="Basketball Court"></label>
+                <button onclick="runFr1()">Search</button>
+            </div>
+            <div id="fr1-result"></div>
         </div>
-    </header>
+    </section>
 
-    <main class="main-container">
-        
-        <!-- Hero & Filters -->
-        <section class="hero-section">
-            <div class="hero">
-                <h1>Find a space that works for you.</h1>
-                <p>
-                    <span>Explore recreational spaces, check what is available now, and see what is happening nearby.</span>
-                    <span class="timestamp" id="live-timestamp">Updated just now &middot; public information</span>
-                </p>
+    <!-- FR-2 -->
+    <section class="fr-card" id="fr2">
+        <div class="fr-head">
+            <h2>FR-2 &middot; View space details</h2>
+            <span class="badge">guest</span>
+        </div>
+        <div class="fr-body">
+            <div class="controls">
+                <label>Space ID <input type="number" id="fr2-id" value="3" min="1"></label>
+                <button onclick="runFr2()">View</button>
             </div>
-            
-            <div class="filters">
-                <input type="text" class="search-bar" placeholder="Search facilities, spaces, or activities" aria-label="Search">
-                
-                <!-- Filter Dropdown Simulation -->
-                <button class="filter-chip">All areas <span style="font-size: 0.8em; margin-left: 4px;">▼</span></button>
-                
-                <!-- Filter Toggle Buttons -->
-                <button class="filter-chip active">Open now</button>
-                <button class="filter-chip">Reservable</button>
-                <button class="filter-chip">Open-play</button>
-                <button class="filter-chip">Events today</button>
+            <div id="fr2-result"></div>
+        </div>
+    </section>
+
+    <!-- FR-3 -->
+    <section class="fr-card" id="fr3">
+        <div class="fr-head">
+            <h2>FR-3 &middot; View availability by time slot</h2>
+            <span class="badge">guest</span>
+        </div>
+        <div class="fr-body">
+            <div class="controls">
+                <label>Space ID <input type="number" id="fr3-id" value="1" min="1"></label>
+                <button onclick="runFr3()">Check availability</button>
             </div>
-        </section>
+            <div id="fr3-result"></div>
+        </div>
+    </section>
 
-        <!-- Main Grid: Map & Panel -->
-        <section class="content-grid">
-            
-            <!-- Map Area -->
-            <div class="map-container">
-                <div id="map"></div>
-                <!-- Map Legend overlay -->
-                <div class="map-legend">
-                    <div class="legend-item"><div class="indicator open"></div> Open</div>
-                    <div class="legend-item"><div class="indicator limited"></div> Limited</div>
-                    <div class="legend-item"><div class="indicator closed"></div> Closed</div>
-                </div>
+    <!-- FR-4 -->
+    <section class="fr-card" id="fr4">
+        <div class="fr-head">
+            <h2>FR-4 &middot; View public events</h2>
+            <span class="badge">guest</span>
+        </div>
+        <div class="fr-body">
+            <div class="controls">
+                <button onclick="runFr4()">Load public events</button>
             </div>
+            <div id="fr4-result"></div>
+        </div>
+    </section>
 
-            <!-- Selected Facility Panel -->
-            <aside class="side-panel">
-                <div class="panel-header">
-                    <div class="subtitle">
-                        Selected Facility
-                        <span class="status-badge">Open now</span>
-                    </div>
-                    <h2>Central Recreation Center</h2>
-                    <p class="address">120 Civic Way &middot; 0.8 mi away</p>
-                </div>
-
-                <div class="stats-row">
-                    <div class="stat">
-                        <span class="stat-value">8</span>
-                        <span class="stat-label">spaces available</span>
-                    </div>
-                    <div class="stat stat-right">
-                        <span class="stat-value" style="color: #4caf50;">Mixed access</span>
-                        <span class="stat-label">Until 10:00 PM</span>
-                    </div>
-                </div>
-
-                <div class="space-list">
-                    <div class="space-item">
-                        <span>Indoor basketball court A</span>
-                        <span class="space-status available">Available</span>
-                    </div>
-                    <div class="space-item">
-                        <span>Fitness studio</span>
-                        <span class="space-status available">Available</span>
-                    </div>
-                    <div class="space-item">
-                        <span>Community room</span>
-                        <span class="space-status reserved">Reserved at 6:00 PM</span>
-                    </div>
-                </div>
-
-                <div class="events-section">
-                    <div class="events-header">
-                        <h3>Upcoming public events</h3>
-                        <a href="#" style="font-size: 0.85rem; font-weight: 500;">View full schedule</a>
-                    </div>
-                    
-                    <div class="event-item">
-                        <div class="event-date">
-                            <span class="month">Sep</span>
-                            <span class="day">24</span>
-                        </div>
-                        <div class="event-details">
-                            <h4>Community pickup basketball</h4>
-                            <p>6:00 PM &middot; Indoor court A</p>
-                        </div>
-                    </div>
-                    
-                    <div class="event-item">
-                        <div class="event-date">
-                            <span class="month">Sep</span>
-                            <span class="day">27</span>
-                        </div>
-                        <div class="event-details">
-                            <h4>Beginner strength workshop</h4>
-                            <p>10:00 AM &middot; Fitness studio</p>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="btn btn-primary btn-full-width">View facility details</button>
-            </aside>
-            
-        </section>
-
-        <!-- Lower Information Area -->
-        <section class="lower-area">
-            
-            <div class="nearby-section">
-                <div class="section-header">
-                    <h3>Nearby right now</h3>
-                    <a href="#" style="font-size: 0.85rem; font-weight: 500;">View all facilities</a>
-                </div>
-                <div class="cards-grid">
-                    <div class="card">
-                        <h4>Northside Fieldhouse</h4>
-                        <p>Open &middot; 12 spaces</p>
-                    </div>
-                    <div class="card">
-                        <h4>Riverside Courts</h4>
-                        <p>Limited &middot; 2 spaces</p>
-                    </div>
-                </div>
+    <!-- FR-5 -->
+    <section class="fr-card" id="fr5">
+        <div class="fr-head">
+            <h2>FR-5 &middot; Access-mode labels</h2>
+            <span class="badge">guest</span>
+        </div>
+        <div class="fr-body">
+            <div class="controls">
+                <button onclick="runFr5()">Load access modes</button>
             </div>
-            
-            <div class="upcoming-section">
-                <div class="section-header">
-                    <h3>Events coming up</h3>
-                    <a href="#" style="font-size: 0.85rem; font-weight: 500;">Browse events</a>
-                </div>
-                <div class="cards-grid">
-                    <div class="card">
-                        <h4>Outdoor yoga</h4>
-                        <p>Tomorrow &middot; Riverside</p>
-                    </div>
-                    <div class="card">
-                        <h4>Open swim</h4>
-                        <p>Friday &middot; Aquatics</p>
-                    </div>
-                </div>
-            </div>
+            <div id="fr5-result"></div>
+        </div>
+    </section>
+</main>
 
-        </section>
+<script>
+    function renderResult(targetId, data) {
+        const el = document.getElementById(targetId);
+        if (data.error) {
+            el.innerHTML = '<p class="err">' + escapeHtml(data.error) + '</p>';
+            return;
+        }
+        let html = '<p class="meta">' + data.rowCount + ' row(s) returned.</p>';
+        if (!data.rows || data.rows.length === 0) {
+            html += '<p class="empty">No rows matched.</p>';
+        } else {
+            html += '<div style="overflow-x:auto"><table><thead><tr>';
+            data.columns.forEach(c => html += '<th>' + escapeHtml(c) + '</th>');
+            html += '</tr></thead><tbody>';
+            data.rows.forEach(row => {
+                html += '<tr>';
+                data.columns.forEach(c => {
+                    const v = row[c];
+                    html += '<td>' + (v === null || v === undefined ? '<span class="empty">NULL</span>' : escapeHtml(v)) + '</td>';
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+        html += '<details><summary>Show SQL</summary><pre>' + escapeHtml(data.sql || '') + '</pre></details>';
+        el.innerHTML = html;
+    }
 
-    </main>
+    function fetchFr(targetId, params) {
+        const el = document.getElementById(targetId);
+        el.innerHTML = '<p class="meta">Loading...</p>';
+        fetch('api/fr?' + params)
+            .then(r => r.json())
+            .then(d => renderResult(targetId, d))
+            .catch(e => el.innerHTML = '<p class="err">Request failed: ' + escapeHtml(e.message) + '</p>');
+    }
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <!-- Custom Application JS -->
-    <script src="js/index.js"></script>
+    function runFr1() {
+        const city = encodeURIComponent(document.getElementById('fr1-city').value);
+        const type = encodeURIComponent(document.getElementById('fr1-type').value);
+        fetchFr('fr1-result', 'fr=1&city=' + city + '&space_type=' + type);
+    }
+    function runFr2() {
+        const id = encodeURIComponent(document.getElementById('fr2-id').value);
+        fetchFr('fr2-result', 'fr=2&space_id=' + id);
+    }
+    function runFr3() {
+        const id = encodeURIComponent(document.getElementById('fr3-id').value);
+        fetchFr('fr3-result', 'fr=3&space_id=' + id);
+    }
+    function runFr4() { fetchFr('fr4-result', 'fr=4'); }
+    function runFr5() { fetchFr('fr5-result', 'fr=5'); }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Auto-run all five on load so the page is populated immediately.
+    window.addEventListener('DOMContentLoaded', () => {
+        runFr1(); runFr2(); runFr3(); runFr4(); runFr5();
+    });
+</script>
 </body>
 </html>
