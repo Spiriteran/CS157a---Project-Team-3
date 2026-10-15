@@ -1,18 +1,10 @@
--- =====================================================================
--- City Recreational Spaces Navigator — Relational Schema (MySQL 8.x)
--- Team 3 — CS157A
---
--- This is the AUTHORITATIVE schema. It is hand-written SQL (no ORM /
--- no generator) and enforces the integrity rules described in the
--- functional-requirements write-up:
---   * TIME_SLOT end_time must be after start_time
---   * No two TIME_SLOTs for the same space at the same start/end
---   * At most one active SLOT_LOCK per time slot
---   * At most one CONFIRMED reservation per time slot (via a generated
---     column + UNIQUE), while allowing many historical CANCELLED rows
---   * An IMAGE belongs to exactly one of EVENT xor COMMENT
---   * Domain CHECKs on access_mode / status / visibility / role_name
--- =====================================================================
+-- schema for city rec spaces navigator (MySQL 8)
+-- hand-written, no ORM
+-- enforces the rules from the write-up:
+-- end_time > start_time, no dup time slots per space
+-- one active lock per slot, one CONFIRMED reservation per slot
+-- image belongs to an event xor a comment
+-- domain checks on access_mode / status / visibility / role_name
 
 CREATE DATABASE IF NOT EXISTS city_recreation;
 USE city_recreation;
@@ -35,9 +27,7 @@ DROP TABLE IF EXISTS `CITY`;
 DROP TABLE IF EXISTS `ROLE`;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ---------------------------------------------------------------------
--- Core location hierarchy: CITY -> FACILITY -> SPACE -> TIME_SLOT
--- ---------------------------------------------------------------------
+-- location hierarchy: city -> facility -> space -> time_slot
 
 CREATE TABLE `CITY` (
     `city_id` INT PRIMARY KEY AUTO_INCREMENT,
@@ -81,9 +71,7 @@ CREATE TABLE `TIME_SLOT` (
     UNIQUE KEY `uk_space_time` (`space_id`, `start_time`, `end_time`)
 );
 
--- ---------------------------------------------------------------------
--- Accounts: ROLE -> USER -> PREFERENCE
--- ---------------------------------------------------------------------
+-- accounts: role -> user -> preference
 
 CREATE TABLE `ROLE` (
     `role_id` INT PRIMARY KEY AUTO_INCREMENT,
@@ -100,14 +88,14 @@ CREATE TABLE `USER` (
     `email_verified` BOOLEAN NOT NULL DEFAULT FALSE,
     `twofa_enabled` BOOLEAN NOT NULL DEFAULT FALSE,
     `billing_address` VARCHAR(255),
-    `payment_method_stub` VARCHAR(100), -- placeholder only; never stores a real card number
+    `payment_method_stub` VARCHAR(100), -- stub only, no real card number
     FOREIGN KEY (`role_id`) REFERENCES `ROLE`(`role_id`)
 );
 
--- A USER has 0 or 1 PREFERENCE (user_id is PK, so at most one row per user)
+-- user has 0 or 1 preference (user_id is PK)
 CREATE TABLE `PREFERENCE` (
     `user_id` INT PRIMARY KEY,
-    `default_city_id` INT, -- nullable: 0 or 1 default city
+    `default_city_id` INT, -- nullable, 0 or 1 default city
     `default_sport` VARCHAR(100),
     `map_radius` INT NOT NULL DEFAULT 10,
     `notify_pref` VARCHAR(30) NOT NULL DEFAULT 'EMAIL',
@@ -116,12 +104,9 @@ CREATE TABLE `PREFERENCE` (
     FOREIGN KEY (`default_city_id`) REFERENCES `CITY`(`city_id`)
 );
 
--- ---------------------------------------------------------------------
--- Booking: SLOT_LOCK (temporary hold) -> RESERVATION -> EVENT
--- ---------------------------------------------------------------------
-
--- UNIQUE(slot_id) => at most one active lock per slot. Expired locks are
--- deleted transactionally in the application layer before re-acquiring.
+-- booking: slot_lock (temp hold) -> reservation -> event
+-- unique(slot_id) = one active lock per slot
+-- expired locks get deleted in the app layer before re-locking
 CREATE TABLE `SLOT_LOCK` (
     `lock_id` INT PRIMARY KEY AUTO_INCREMENT,
     `user_id` INT NOT NULL,
@@ -132,8 +117,8 @@ CREATE TABLE `SLOT_LOCK` (
     FOREIGN KEY (`slot_id`) REFERENCES `TIME_SLOT`(`slot_id`)
 );
 
--- active_slot_id is NULL unless the row is CONFIRMED; UNIQUE on it means
--- at most one CONFIRMED reservation per slot, with unlimited CANCELLED history.
+-- active_slot_id is NULL unless CONFIRMED
+-- unique on it = one CONFIRMED per slot, cancelled history unlimited
 CREATE TABLE `RESERVATION` (
     `reservation_id` INT PRIMARY KEY AUTO_INCREMENT,
     `user_id` INT NOT NULL,
@@ -157,9 +142,7 @@ CREATE TABLE `EVENT` (
     CONSTRAINT `chk_event_visibility` CHECK (`visibility` IN ('PUBLIC', 'PRIVATE'))
 );
 
--- ---------------------------------------------------------------------
--- Social: EVENT_PARTICIPANT, COMMENT, IMAGE
--- ---------------------------------------------------------------------
+-- social: event_participant, comment, image
 
 CREATE TABLE `EVENT_PARTICIPANT` (
     `user_id` INT NOT NULL,
@@ -182,7 +165,7 @@ CREATE TABLE `COMMENT` (
     FOREIGN KEY (`user_id`) REFERENCES `USER`(`user_id`)
 );
 
--- An IMAGE belongs to exactly one of EVENT xor COMMENT (never both, never neither)
+-- image belongs to an event xor a comment, not both and not neither
 CREATE TABLE `IMAGE` (
     `image_id` INT PRIMARY KEY AUTO_INCREMENT,
     `user_id` INT NOT NULL,
@@ -217,10 +200,7 @@ CREATE TABLE `USER_FAVORITE` (
     FOREIGN KEY (`space_id`) REFERENCES `SPACE`(`space_id`)
 );
 
--- =====================================================================
--- MOCK DATA (>= 10 rows per core table) — hand-written, consistent with
--- every constraint above.
--- =====================================================================
+-- mock data, 10+ rows per core table
 
 INSERT INTO `ROLE` (`role_name`) VALUES
 ('GENERAL_USER'), ('RESERVATION_USER'), ('ADMIN');
@@ -290,16 +270,14 @@ INSERT INTO `TIME_SLOT` (`space_id`, `start_time`, `end_time`, `status`) VALUES
 (9, '2026-10-03 09:00:00', '2026-10-03 12:00:00', 'RESERVED'),
 (10, '2026-10-03 06:00:00', '2026-10-03 07:00:00', 'AVAILABLE');
 
--- Each lock targets a distinct slot (UNIQUE(slot_id)). Original mock reused
--- slot 2 twice; that is intentionally removed to respect the constraint.
+-- each lock on a distinct slot (unique(slot_id))
 INSERT INTO `SLOT_LOCK` (`user_id`, `slot_id`, `created_at`, `expires_at`) VALUES
 (2, 2, '2026-09-30 10:00:00', '2026-09-30 10:15:00'),
 (3, 5, '2026-09-30 10:10:00', '2026-09-30 10:25:00'),
 (4, 7, '2026-09-30 11:00:00', '2026-09-30 11:15:00'),
 (7, 10, '2026-09-30 11:00:00', '2026-09-30 11:15:00');
 
--- Confirmed reservations each own a distinct slot (uk_active_slot);
--- cancelled rows may freely share slots with confirmed/other cancelled rows.
+-- confirmed ones each own a distinct slot, cancelled can share
 INSERT INTO `RESERVATION` (`user_id`, `slot_id`, `status`) VALUES
 (3, 1, 'CONFIRMED'),
 (7, 3, 'CONFIRMED'),
