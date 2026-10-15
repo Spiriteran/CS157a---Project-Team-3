@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Events | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html" class="active">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="register.html">Create account</a>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="page-head">
+        <h1>Public events</h1>
+        <p>Community events happening at city recreational spaces. Private and cancelled events are never shown.</p>
+    </div>
+
+    <div class="guest-banner">
+        <span>&#127881;</span>
+        <span><strong>Guest view</strong> &middot; FR-4 (public events), live from the database. No account required.</span>
+    </div>
+
+    <section id="events"></section>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p>Guest functional requirements, live against <code>city_recreation</code>.</p>
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+<script src="js/fr-api.js"></script>
+<script>
+    function monthAbbr(raw) {
+        const d = new Date(String(raw).replace(' ', 'T'));
+        return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short' });
+    }
+    function dayNum(raw) {
+        const d = new Date(String(raw).replace(' ', 'T'));
+        return isNaN(d) ? '' : d.getDate();
+    }
+
+    // FR-4: public confirmed events as cards.
+    async function loadEvents() {
+        const host = document.getElementById('events');
+        host.innerHTML = '<p class="result-meta">Loading...</p>';
+        const data = await fetchFr(4);
+
+        if (data.error) { host.innerHTML = '<div class="card card-pad"><p class="err-state">' + esc(data.error) + '</p></div>'; return; }
+
+        let html = '<p class="result-meta">' + data.rowCount + ' public event(s)</p>';
+        if (!data.rows || data.rows.length === 0) {
+            html += '<p class="empty-state">No public events right now.</p>';
+        } else {
+            html += '<div style="display:flex;flex-direction:column;gap:1rem;">';
+            data.rows.forEach(r => {
+                html += `
+                    <article class="card event-card">
+                        <div class="event-when">
+                            <span class="mon">${esc(monthAbbr(r.start_time))}</span>
+                            <span class="day">${esc(dayNum(r.start_time))}</span>
+                        </div>
+                        <div class="event-body">
+                            <h3>${esc(r.title)}</h3>
+                            <p>${esc(r.description)}</p>
+                            <div class="where">
+                                ${esc(r.facility_name)} &middot; ${esc(r.space_name)}
+                                &middot; ${formatDateTime(r.start_time)} – ${formatDateTime(r.end_time)}
+                            </div>
+                        </div>
+                    </article>`;
+            });
+            html += '</div>';
+        }
+        html += sqlDetails(data.sql);
+        host.innerHTML = html;
+    }
+
+    window.addEventListener('DOMContentLoaded', loadEvents);
+</script>
+</body>
+</html>

@@ -57,6 +57,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.2</version>
+                <configuration>
+                    <!-- Exclude the manually-committed driver jar so the WAR
+                         ships exactly one MySQL connector (the pom-managed
+                         8.0.33), avoiding a duplicate JDBC driver on the
+                         classpath. -->
+                    <packagingExcludes>WEB-INF/lib/mysql-connector-j-26.7.0.jar</packagingExcludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
