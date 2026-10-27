@@ -6,8 +6,8 @@
 
 USE city_recreation;
 
--- user sign in (fetch account + role)
---   verifies login identity and gets role tier
+-- user sign in
+--   check email and password hash
 SELECT  u.user_id,
         u.role_id,
         r.role_name,
@@ -18,17 +18,15 @@ SELECT  u.user_id,
         u.twofa_enabled
 FROM        USER u
 JOIN        ROLE r ON r.role_id = u.role_id
-WHERE   u.email = 'user1@example.com';   -- login email
+WHERE   u.email = 'user1@example.com';
 
 
--- user registration (create account)
---   default GENERAL_USER tier; general users don't need 2FA/payment yet
+-- create an account (general user)
 INSERT INTO USER (role_id, email, password_hash, phone_num, email_verified, twofa_enabled)
 VALUES (1, 'newuser@example.com', 'hashedpwd', '555-0199', TRUE, FALSE);
 
 
--- view/manage profile preferences (default city, sport, map radius)
---   weak entity (user has 0 or 1 preference row)
+-- view profile and preferences
 SELECT  p.user_id,
         p.default_city_id,
         c.name        AS default_city_name,
@@ -38,11 +36,10 @@ SELECT  p.user_id,
         p.calendar_view
 FROM        PREFERENCE p
 LEFT JOIN   CITY       c ON c.city_id = p.default_city_id
-WHERE   p.user_id = 1;                   -- user profile
+WHERE   p.user_id = 1;
 
 
--- update preferences
---   upserts if user already has preferences set
+-- edit preferences (upsert if already exists)
 INSERT INTO PREFERENCE (user_id, default_city_id, default_sport, map_radius, notify_pref, calendar_view)
 VALUES (1, 1, 'Soccer', 10, 'EMAIL', 'MONTH')
 ON DUPLICATE KEY UPDATE
@@ -54,7 +51,6 @@ ON DUPLICATE KEY UPDATE
 
 
 -- view favorite spaces
---   general users can save and view their favorited spaces
 SELECT  s.space_id,
         s.name        AS space_name,
         s.space_type,
@@ -71,16 +67,17 @@ WHERE   uf.user_id = 1
 ORDER BY uf.created_at DESC;
 
 
--- add to favorites / remove from favorites
+-- favorite a space
 INSERT IGNORE INTO USER_FAVORITE (user_id, space_id, created_at)
 VALUES (1, 2, NOW());
 
+
+-- unfavorite a space
 DELETE FROM USER_FAVORITE
 WHERE user_id = 1 AND space_id = 2;
 
 
--- view event attendees and rsvp status
---   general users can join public events
+-- view public event attendees / rsvp status
 SELECT  ep.user_id,
         u.email       AS user_email,
         ep.status,
@@ -88,10 +85,10 @@ SELECT  ep.user_id,
 FROM        EVENT_PARTICIPANT ep
 JOIN        USER              u  ON u.user_id = ep.user_id
 WHERE   ep.event_id = 1
-ORDER BY ep.joined_time ASC;
+ORDER BY ep.joined_time;
 
 
--- join event / update rsvp (GOING / MAYBE / DECLINED)
+-- join public event (rsvp going / maybe / declined)
 INSERT INTO EVENT_PARTICIPANT (user_id, event_id, status, joined_time)
 VALUES (1, 1, 'GOING', NOW())
 ON DUPLICATE KEY UPDATE
@@ -100,7 +97,6 @@ ON DUPLICATE KEY UPDATE
 
 
 -- view comments on an event
---   discussion thread for public events
 SELECT  c.comment_id,
         c.event_id,
         c.user_id,
@@ -110,15 +106,15 @@ SELECT  c.comment_id,
 FROM        COMMENT c
 JOIN        USER    u ON u.user_id = c.user_id
 WHERE   c.event_id = 1
-ORDER BY c.created_time ASC;
+ORDER BY c.created_time;
 
 
--- post a comment on an event
+-- post comment on an event
 INSERT INTO COMMENT (event_id, user_id, body, created_time)
 VALUES (1, 1, 'Looking forward to this game!', NOW());
 
 
 -- delete own comment
---   users may only delete their own comments
+--   cannot delete other people's comments
 DELETE FROM COMMENT
 WHERE comment_id = 1 AND user_id = 1;
