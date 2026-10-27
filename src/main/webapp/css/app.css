@@ -268,3 +268,67 @@ details.sql pre {
 .detail-row { display: flex; justify-content: space-between; padding: .5rem 0; border-bottom: 1px solid var(--bg-sunken); font-size: .92rem; }
 .detail-row .k { color: var(--text-muted); }
 .detail-row .v { font-weight: 500; }
+
+/* ---- General User Tier UI ------------------------------------------- */
+.user-chip {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--bg); border: 1px solid var(--line);
+    padding: .3rem .65rem; border-radius: 999px; font-size: .84rem;
+}
+.user-chip-name { font-weight: 500; color: var(--text); }
+
+.fav-btn {
+    background: none; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: .4rem .7rem; font-size: .85rem; cursor: pointer; display: inline-flex;
+    align-items: center; gap: .35rem; color: var(--text-muted); transition: all .15s ease;
+}
+.fav-btn:hover { background: var(--bg-sunken); color: var(--text); }
+.fav-btn.is-fav {
+    background: #fdf2f2; border-color: #f8b4b4; color: #dc2626; font-weight: 600;
+}
+.fav-btn.is-fav:hover { background: #fee2e2; }
+
+/* RSVP styles */
+.rsvp-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: .8rem; margin-top: .8rem; border-top: 1px solid var(--line);
+    flex-wrap: wrap; gap: .5rem;
+}
+.rsvp-stats { font-size: .85rem; color: var(--text-muted); }
+.rsvp-actions { display: inline-flex; gap: .4rem; }
+.rsvp-btn {
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: .3rem .65rem; font-size: .82rem; cursor: pointer; transition: all .15s;
+}
+.rsvp-btn:hover { background: var(--bg-sunken); }
+.rsvp-btn.active-going { background: var(--brand-wash); border-color: var(--brand); color: var(--brand); font-weight: 600; }
+.rsvp-btn.active-maybe { background: var(--warn-wash); border-color: var(--warn); color: var(--warn); font-weight: 600; }
+
+/* Comments / Discussion styles */
+.discussion-section {
+    margin-top: .9rem; padding-top: .9rem; border-top: 1px dashed var(--line);
+}
+.discussion-toggle {
+    background: none; border: none; font-size: .84rem; font-weight: 600;
+    color: var(--brand); cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: .3rem;
+}
+.comments-container { margin-top: .75rem; }
+.comment-card {
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: .65rem .85rem; margin-bottom: .5rem; font-size: .88rem;
+}
+.comment-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .78rem; color: var(--text-faint); margin-bottom: .25rem;
+}
+.comment-author { font-weight: 600; color: var(--text); }
+.comment-delete-btn {
+    background: none; border: none; color: #dc2626; font-size: .78rem;
+    cursor: pointer; padding: 0; text-decoration: underline;
+}
+.comment-form { display: flex; gap: .5rem; margin-top: .75rem; }
+.comment-form input[type="text"] {
+    flex: 1; padding: .5rem .75rem; border: 1px solid var(--line);
+    border-radius: var(--radius); font-size: .88rem;
+}
+

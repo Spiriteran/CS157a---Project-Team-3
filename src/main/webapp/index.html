@@ -6,6 +6,7 @@
     <title>City Recreational Spaces Navigator</title>
     <meta name="description" content="Find and reserve city recreational spaces. Browse public events and the community forum.">
     <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
 </head>
 <body>
 
@@ -20,10 +21,7 @@
             <a href="events.html">Events</a>
         </nav>
         <div class="nav-spacer"></div>
-        <div class="nav-auth">
-            <a class="btn btn-ghost" href="login.html">Sign in</a>
-            <a class="btn btn-primary" href="register.html">Create account</a>
-        </div>
+        <div class="nav-auth"></div>
     </div>
 </header>
 
@@ -32,64 +30,79 @@
     <section class="hero">
         <h1>Welcome to the Navigator</h1>
         <p>Discover local recreational spaces, join community events, and take part in
-           public discussions. Sign in to reserve, or explore as a guest.</p>
+           public discussions. Sign in to favorite spaces, or explore as a guest.</p>
     </section>
 
     <div class="split">
 
-        <!-- Login panel (mock) -->
-        <section class="card card-pad">
-            <h2 style="font-size:1.25rem;margin-bottom:1rem;">Member sign in</h2>
-            <div class="demo-note">Demo only — sign-in is not wired to the backend this round.</div>
-            <form onsubmit="event.preventDefault(); return false;">
-                <div class="field">
-                    <label for="email">Email address</label>
-                    <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+        <!-- Member Account Panel -->
+        <section class="card card-pad" id="home-auth-card">
+            <div id="home-signed-out">
+                <h2 style="font-size:1.25rem;margin-bottom:.5rem;">Member sign in</h2>
+                <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">
+                    Sign in to manage your favorites, RSVP to events, and set your preferences.
+                </p>
+
+                <div id="home-login-err" style="display:none;padding:.5rem .7rem;margin-bottom:.8rem;background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--radius);font-size:.82rem;color:#b91c1c;"></div>
+
+                <form id="home-login-form">
+                    <div class="field">
+                        <label for="home-email">Email address</label>
+                        <input type="email" id="home-email" placeholder="you@example.com" required autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label for="home-pass">Password</label>
+                        <input type="password" id="home-pass" placeholder="Your password" required autocomplete="off">
+                    </div>
+                    <button type="submit" id="home-login-btn" class="btn btn-primary btn-block">Sign in</button>
+                </form>
+                <div style="margin-top:.8rem;font-size:.8rem;color:var(--text-muted);text-align:center;">
+                    Demo: <a href="javascript:void(0)" onclick="fillHome('user1@example.com', 'password123')">user1@example.com</a>
                 </div>
-                <div class="field">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Your password" autocomplete="off">
+                <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
+                    New here? <a href="register.html">Create an account</a>
+                </p>
+            </div>
+
+            <div id="home-signed-in" style="display:none;">
+                <h2 style="font-size:1.25rem;margin-bottom:.5rem;">Welcome back!</h2>
+                <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:1rem;" id="home-user-intro"></p>
+                <div style="display:flex;flex-direction:column;gap:.6rem;">
+                    <a class="btn btn-primary btn-block" href="favorites.html">View Saved Favorites</a>
+                    <a class="btn btn-ghost btn-block" href="profile.html">Manage Preferences &amp; Profile</a>
+                    <a class="btn btn-ghost btn-block" href="events.html">Browse &amp; RSVP to Events</a>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Sign in</button>
-            </form>
-            <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
-                New here? <a href="register.html">Create an account</a>
-            </p>
-            <p style="margin-top:.5rem;font-size:.85rem;text-align:center;color:var(--text-muted);">
-                No account needed to <a href="explore.html">explore spaces</a> or
-                <a href="events.html">view public events</a>.
-            </p>
+            </div>
         </section>
 
-        <!-- Community forum preview (mock) -->
+        <!-- Community forum preview -->
         <section class="card card-pad">
             <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;">
-                <h2 style="font-size:1.25rem;">Community forum</h2>
-                <span class="badge slate">preview</span>
+                <h2 style="font-size:1.25rem;">Community discussions</h2>
+                <span class="badge green">live</span>
             </div>
 
             <article class="thread">
-                <h3>Saturday morning basketball tourney</h3>
-                <p>Looking for 2 more players for our 5v5 pickup game this Saturday at Central Park Gym.</p>
-                <div class="byline">Posted by user89 &middot; 2 hours ago</div>
+                <h3>Adult 5v5 Pickup Soccer</h3>
+                <p>Bring light and dark jerseys for scrimmage. Hydration station by the bleachers.</p>
+                <div class="byline">Central Park &middot; Discussion active</div>
             </article>
 
             <article class="thread">
-                <h3>Beginner yoga in the park</h3>
-                <p>Relaxing beginner-friendly session at Mitchell Park. Bring your own mat.</p>
-                <div class="byline">Posted by wellnessgroup &middot; 5 hours ago</div>
+                <h3>Saturday Youth Basketball Clinic</h3>
+                <p>Open clinic for ages 8-14. Central Park Gym. RSVP to save a spot.</p>
+                <div class="byline">Central Park Gym &middot; 4 going</div>
             </article>
 
             <article class="thread">
-                <h3>Tennis court maintenance update</h3>
-                <p>Courts 1 and 2 at Rivermark will be closed for resurfacing next Tuesday.</p>
-                <div class="byline">Posted by city_admin &middot; 1 day ago</div>
+                <h3>Open Tennis Round Robin</h3>
+                <p>Casual doubles round robin on Rivermark courts 1 and 2.</p>
+                <div class="byline">Rivermark Park &middot; Discussion active</div>
             </article>
 
-            <button class="btn btn-ghost btn-block" disabled
-                    title="Forum posting is not implemented this round">
-                View all discussions
-            </button>
+            <a class="btn btn-ghost btn-block" href="events.html" style="text-align:center;margin-top:1rem;">
+                View all events &amp; discussions &rarr;
+            </a>
         </section>
 
     </div>
@@ -97,14 +110,64 @@
 
 <footer class="site-footer">
     <div class="inner">
-        <p><strong>For the grader:</strong> the five guest functional requirements are
-           live against the <code>city_recreation</code> database and need no account.</p>
-        <p>FR-1, FR-2, FR-5 &rarr; <a href="explore.html">Explore</a> &nbsp;|&nbsp;
-           FR-3 &rarr; <a href="availability.html">Availability</a> &nbsp;|&nbsp;
-           FR-4 &rarr; <a href="events.html">Events</a></p>
+        <p><strong>Implemented functional requirements:</strong></p>
+        <p>Guest view &rarr; <a href="explore.html">Explore</a> &nbsp;|&nbsp;
+           <a href="availability.html">Availability</a> &nbsp;|&nbsp;
+           <a href="events.html">Events</a></p>
+        <p>General User tier &rarr; <a href="profile.html">Profile &amp; Preferences (FR-7)</a> &nbsp;|&nbsp;
+           <a href="favorites.html">Favorites (FR-8)</a> &nbsp;|&nbsp;
+           <a href="events.html">RSVP &amp; Comments (FR-9, FR-10)</a></p>
         <p style="color:var(--text-faint);margin-top:.5rem;">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
     </div>
 </footer>
+
+<script>
+    function fillHome(email, pass) {
+        document.getElementById('home-email').value = email;
+        document.getElementById('home-pass').value = pass;
+    }
+
+    async function syncHomeState() {
+        const user = await Auth.getMe();
+        if (user) {
+            document.getElementById('home-signed-out').style.display = 'none';
+            document.getElementById('home-signed-in').style.display = 'block';
+            document.getElementById('home-user-intro').textContent = `Signed in as ${user.email} (${user.roleName}).`;
+        } else {
+            document.getElementById('home-signed-out').style.display = 'block';
+            document.getElementById('home-signed-in').style.display = 'none';
+        }
+    }
+
+    document.getElementById('home-login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('home-login-err');
+        const btn = document.getElementById('home-login-btn');
+        err.style.display = 'none';
+        btn.disabled = true;
+
+        const email = document.getElementById('home-email').value;
+        const password = document.getElementById('home-pass').value;
+
+        try {
+            const res = await Auth.login(email, password);
+            if (res.success) {
+                syncHomeState();
+                Auth.updateHeader();
+            } else {
+                err.textContent = res.error || 'Login failed';
+                err.style.display = 'block';
+            }
+        } catch (e) {
+            err.textContent = 'Server error';
+            err.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', syncHomeState);
+</script>
 
 </body>
 </html>

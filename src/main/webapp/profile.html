@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile & Preferences | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+            <a href="favorites.html">Favorites</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth"></div>
+    </div>
+</header>
+
+<main class="page" style="max-width:720px;">
+    <div class="page-head">
+        <h1>User Profile &amp; Preferences</h1>
+        <p>Manage your account settings, navigation defaults, and notification preferences (FR-7).</p>
+    </div>
+
+    <div id="unauth-view" class="card card-pad" style="display:none;text-align:center;">
+        <p style="font-size:1.05rem;margin-bottom:1rem;">You must be signed in to view and manage your profile.</p>
+        <a class="btn btn-primary" href="login.html">Sign in</a>
+        <a class="btn btn-ghost" href="register.html" style="margin-left:.5rem;">Create account</a>
+    </div>
+
+    <div id="auth-view" style="display:none;display:flex;flex-direction:column;gap:1.5rem;">
+
+        <!-- Account details card -->
+        <section class="card card-pad">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h2 style="font-size:1.2rem;">Account Overview</h2>
+                <span id="role-badge" class="badge green"></span>
+            </div>
+
+            <div class="detail-row">
+                <span class="k">Email Address</span>
+                <span id="u-email" class="v"></span>
+            </div>
+            <div class="detail-row">
+                <span class="k">Phone Number (2FA)</span>
+                <span id="u-phone" class="v"></span>
+            </div>
+            <div class="detail-row">
+                <span class="k">Email Verification</span>
+                <span id="u-verified" class="v"></span>
+            </div>
+            <div class="detail-row">
+                <span class="k">Two-Factor Authentication (2FA)</span>
+                <span id="u-2fa" class="v"></span>
+            </div>
+        </section>
+
+        <!-- Preferences card (FR-7) -->
+        <section class="card card-pad">
+            <h2 style="font-size:1.2rem;margin-bottom:.5rem;">Navigator Preferences</h2>
+            <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:1.2rem;">
+                Customize how the interactive map, default sports filters, and schedules appear for your account.
+            </p>
+
+            <div id="pref-msg" style="display:none;padding:.6rem .8rem;margin-bottom:1rem;border-radius:var(--radius);font-size:.86rem;"></div>
+
+            <form id="pref-form">
+                <div class="field">
+                    <label for="pref-city">Default City</label>
+                    <select id="pref-city">
+                        <option value="1">San Jose, CA</option>
+                        <option value="2">Santa Clara, CA</option>
+                        <option value="3">Sunnyvale, CA</option>
+                        <option value="4">Mountain View, CA</option>
+                        <option value="5">Palo Alto, CA</option>
+                        <option value="6">Cupertino, CA</option>
+                        <option value="7">Milpitas, CA</option>
+                        <option value="8">Fremont, CA</option>
+                        <option value="9">Los Gatos, CA</option>
+                        <option value="10">Campbell, CA</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="pref-sport">Preferred Sport</label>
+                    <select id="pref-sport">
+                        <option value="Soccer">Soccer</option>
+                        <option value="Basketball">Basketball</option>
+                        <option value="Tennis">Tennis</option>
+                        <option value="Pickleball">Pickleball</option>
+                        <option value="Baseball">Baseball</option>
+                        <option value="Volleyball">Volleyball</option>
+                        <option value="Track">Track &amp; Field</option>
+                        <option value="General">General / All</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="pref-radius">Map Search Radius (miles)</label>
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <input type="range" id="pref-radius" min="1" max="50" step="1" value="10" style="flex:1;">
+                        <span id="radius-val" style="font-weight:600;min-width:50px;">10 mi</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="pref-notify">Notification Preference</label>
+                    <select id="pref-notify">
+                        <option value="EMAIL">Email notifications</option>
+                        <option value="SMS">SMS text alerts</option>
+                        <option value="NONE">None</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="pref-calendar">Calendar Schedule View</label>
+                    <select id="pref-calendar">
+                        <option value="MONTH">Month view</option>
+                        <option value="WEEK">Week view</option>
+                        <option value="DAY">Day view</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="save-btn" class="btn btn-primary btn-block" style="margin-top:1rem;">Save Preferences</button>
+            </form>
+        </section>
+
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+<script>
+    const radiusInput = document.getElementById('pref-radius');
+    const radiusVal = document.getElementById('radius-val');
+    radiusInput.addEventListener('input', () => {
+        radiusVal.textContent = radiusInput.value + ' mi';
+    });
+
+    async function initProfile() {
+        const user = await Auth.getMe();
+        if (!user) {
+            document.getElementById('unauth-view').style.display = 'block';
+            document.getElementById('auth-view').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('unauth-view').style.display = 'none';
+        document.getElementById('auth-view').style.display = 'flex';
+
+        // Render user overview
+        document.getElementById('u-email').textContent = user.email;
+        document.getElementById('u-phone').textContent = user.phoneNum || 'Not provided';
+        document.getElementById('u-verified').innerHTML = user.emailVerified
+            ? '<span class="badge green">Verified</span>'
+            : '<span class="badge slate">Pending</span>';
+        document.getElementById('u-2fa').innerHTML = user.twofaEnabled
+            ? '<span class="badge green">Enabled</span>'
+            : '<span class="badge slate">Disabled</span>';
+        document.getElementById('role-badge').textContent = user.roleName;
+
+        // Fetch preferences
+        try {
+            const res = await fetch('api/user/preferences');
+            if (res.ok) {
+                const p = await res.json();
+                if (p.defaultCityId) document.getElementById('pref-city').value = p.defaultCityId;
+                if (p.defaultSport) document.getElementById('pref-sport').value = p.defaultSport;
+                if (p.mapRadius) {
+                    radiusInput.value = p.mapRadius;
+                    radiusVal.textContent = p.mapRadius + ' mi';
+                }
+                if (p.notifyPref) document.getElementById('pref-notify').value = p.notifyPref;
+                if (p.calendarView) document.getElementById('pref-calendar').value = p.calendarView;
+            }
+        } catch (err) {
+            console.error('Failed to load preferences', err);
+        }
+    }
+
+    document.getElementById('pref-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('pref-msg');
+        const btn = document.getElementById('save-btn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        msg.style.display = 'none';
+
+        const citySelect = document.getElementById('pref-city');
+        const payload = {
+            defaultCityId: parseInt(citySelect.value),
+            defaultCityName: citySelect.options[citySelect.selectedIndex].text.split(',')[0].trim(),
+            defaultSport: document.getElementById('pref-sport').value,
+            mapRadius: parseInt(radiusInput.value),
+            notifyPref: document.getElementById('pref-notify').value,
+            calendarView: document.getElementById('pref-calendar').value
+        };
+
+        try {
+            const res = await fetch('api/user/preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                msg.style.display = 'block';
+                msg.style.background = '#ecfdf5';
+                msg.style.color = '#065f46';
+                msg.style.border = '1px solid #a7f3d0';
+                msg.textContent = 'Preferences successfully saved!';
+            } else {
+                throw new Error(data.error || 'Failed to save');
+            }
+        } catch (err) {
+            msg.style.display = 'block';
+            msg.style.background = '#fef2f2';
+            msg.style.color = '#b91c1c';
+            msg.style.border = '1px solid #fecaca';
+            msg.textContent = err.message || 'Error updating preferences.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Preferences';
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', initProfile);
+</script>
+
+</body>
+</html>

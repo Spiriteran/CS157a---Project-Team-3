@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Favorites | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+            <a href="favorites.html" class="active">Favorites</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth"></div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="page-head">
+        <h1>Your Favorite Spaces</h1>
+        <p>Quick access to your bookmarked courts, fields, and recreational areas (FR-8).</p>
+    </div>
+
+    <div id="unauth-view" class="card card-pad" style="display:none;text-align:center;">
+        <p style="font-size:1.05rem;margin-bottom:1rem;">Sign in to view and save your favorite recreational spaces.</p>
+        <a class="btn btn-primary" href="login.html">Sign in</a>
+        <a class="btn btn-ghost" href="register.html" style="margin-left:.5rem;">Create account</a>
+    </div>
+
+    <div id="auth-view" style="display:none;">
+        <div id="favs-container"></div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+<script>
+    async function loadFavorites() {
+        const user = await Auth.getMe();
+        if (!user) {
+            document.getElementById('unauth-view').style.display = 'block';
+            document.getElementById('auth-view').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('unauth-view').style.display = 'none';
+        document.getElementById('auth-view').style.display = 'block';
+
+        const host = document.getElementById('favs-container');
+        host.innerHTML = '<p class="result-meta">Loading your favorites...</p>';
+
+        try {
+            const res = await fetch('api/user/favorites');
+            const data = await res.json();
+            const list = data.favorites || [];
+
+            if (list.length === 0) {
+                host.innerHTML = `
+                    <div class="card card-pad" style="text-align:center;padding:2.5rem 1rem;">
+                        <span style="font-size:2.2rem;display:block;margin-bottom:.5rem;">&#11088;</span>
+                        <h3 style="margin-bottom:.4rem;">No favorite spaces saved yet</h3>
+                        <p style="color:var(--text-muted);margin-bottom:1.2rem;">
+                            Browse courts, fields, and parks in the catalog and click the favorite star to save them here.
+                        </p>
+                        <a class="btn btn-primary" href="explore.html">Explore Spaces</a>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<p class="result-meta">${list.length} saved space(s)</p>`;
+            html += '<div class="card-grid">';
+            list.forEach(item => {
+                const price = Number(item.price) > 0 ? ('$' + item.price) : 'Free';
+                html += `
+                    <div class="card space-card" id="fav-card-${item.spaceId}">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
+                            <span class="badge ${item.accessMode === 'OPEN_PLAY' ? 'green' : 'amber'}">${Auth.esc(item.accessMode)}</span>
+                            <button class="fav-btn is-fav" onclick="removeFav(${item.spaceId})" title="Remove from favorites">&#10084; Saved</button>
+                        </div>
+                        <h3>${Auth.esc(item.spaceName)}</h3>
+                        <div class="space-meta">${Auth.esc(item.spaceType)} &middot; ${Auth.esc(item.facilityName)} &middot; ${Auth.esc(item.cityName)}</div>
+                        <div class="space-foot" style="margin-top:1rem;">
+                            <span class="price">${Auth.esc(price)}</span>
+                            <a class="btn btn-ghost" href="availability.html?space_id=${item.spaceId}">Availability</a>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            host.innerHTML = html;
+        } catch (err) {
+            host.innerHTML = '<p class="err-state">Failed to load favorites.</p>';
+        }
+    }
+
+    async function removeFav(spaceId) {
+        try {
+            const res = await fetch('api/user/favorites?space_id=' + spaceId, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadFavorites();
+            }
+        } catch (err) {
+            alert('Failed to remove favorite.');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadFavorites);
+</script>
+
+</body>
+</html>

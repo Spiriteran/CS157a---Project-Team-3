@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore Spaces | City Recreational Spaces Navigator</title>
     <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
 </head>
 <body>
 
@@ -158,10 +159,57 @@
             ['Address', r['address']],
             ['City', r['city_name'] + ', ' + r['state']]
         ];
+
+        let favBtnHtml = '';
+        const user = await Auth.getMe();
+        if (user) {
+            let isFav = false;
+            try {
+                const favRes = await fetch('api/user/favorites?space_id=' + spaceId);
+                const favData = await favRes.json();
+                isFav = favData && favData.isFavorite;
+            } catch (ignored) {}
+
+            favBtnHtml = `
+                <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+                    <button id="modal-fav-btn" class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleModalFav(${esc(spaceId)})">
+                        ${isFav ? '&#10084; Saved in Favorites' : '&#9825; Save to Favorites'}
+                    </button>
+                </div>`;
+        } else {
+            favBtnHtml = `
+                <div style="margin-top:1rem;font-size:.82rem;color:var(--text-muted);text-align:right;">
+                    <a href="login.html">Sign in</a> to save this space to your favorites.
+                </div>`;
+        }
+
         body.innerHTML =
             rows.map(([k, v]) => `<div class="detail-row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')
+            + favBtnHtml
             + `<div style="margin-top:1.2rem;"><a class="btn btn-primary btn-block" href="availability.html?space_id=${esc(r['space_id'])}">Check availability</a></div>`
             + sqlDetails(data.sql);
+    }
+
+    async function toggleModalFav(spaceId) {
+        const btn = document.getElementById('modal-fav-btn');
+        const isFav = btn.classList.contains('is-fav');
+        try {
+            if (isFav) {
+                await fetch('api/user/favorites?space_id=' + spaceId, { method: 'DELETE' });
+                btn.classList.remove('is-fav');
+                btn.innerHTML = '&#9825; Save to Favorites';
+            } else {
+                await fetch('api/user/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ spaceId: spaceId })
+                });
+                btn.classList.add('is-fav');
+                btn.innerHTML = '&#10084; Saved in Favorites';
+            }
+        } catch (err) {
+            alert('Failed to update favorite status.');
+        }
     }
 
     function closeModal() { document.getElementById('modal').classList.remove('open'); }

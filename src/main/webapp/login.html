@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in | City Recreational Spaces Navigator</title>
     <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
 </head>
 <body>
 
@@ -32,23 +33,30 @@
     </div>
 
     <section class="card card-pad">
-        <div class="demo-note">Demo only — authentication is not implemented this round. The guest functional requirements work without an account.</div>
-        <form onsubmit="event.preventDefault(); document.getElementById('msg').style.display='block';">
+        <div id="error-box" class="err-state" style="display:none;margin-bottom:1rem;padding:.6rem .8rem;background:#fee2e2;border:1px solid #f87171;border-radius:var(--radius);font-size:.85rem;color:#b91c1c;"></div>
+
+        <form id="login-form">
             <div class="field">
                 <label for="email">Email address</label>
-                <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+                <input type="email" id="email" placeholder="you@example.com" required autocomplete="off">
             </div>
             <div class="field">
                 <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Your password" autocomplete="off">
+                <input type="password" id="password" placeholder="Your password" required autocomplete="off">
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+            <button type="submit" id="submit-btn" class="btn btn-primary btn-block">Sign in</button>
         </form>
-        <p id="msg" style="display:none;margin-top:1rem;font-size:.88rem;text-align:center;color:var(--text-muted);">
-            This is a mock screen — no session is created.
-            Head to <a href="explore.html">Explore</a> or <a href="events.html">Events</a> to try the live guest features.
-        </p>
-        <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
+
+        <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.82rem;color:var(--text-muted);">
+            <div style="font-weight:600;margin-bottom:.3rem;color:var(--text);">Quick Demo Logins (from seed data):</div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem;">
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user1@example.com', 'password123')">user1 (General)</button>
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user4@example.com', 'password123')">user4 (General)</button>
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user2@example.com', 'password123')">user2 (Reservation)</button>
+            </div>
+        </div>
+
+        <p style="margin-top:1.2rem;font-size:.88rem;text-align:center;">
             Don't have an account? <a href="register.html">Create one</a>
         </p>
     </section>
@@ -59,6 +67,42 @@
         <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
     </div>
 </footer>
+
+<script>
+    function fillLogin(email, pass) {
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = pass;
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errBox = document.getElementById('error-box');
+        const btn = document.getElementById('submit-btn');
+        errBox.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const res = await Auth.login(email, password);
+            if (res.success) {
+                window.location.href = 'explore.html';
+            } else {
+                errBox.textContent = res.error || 'Failed to sign in.';
+                errBox.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Sign in';
+            }
+        } catch (err) {
+            errBox.textContent = 'Server connection error.';
+            errBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Sign in';
+        }
+    });
+</script>
 
 </body>
 </html>

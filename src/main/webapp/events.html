@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Public Events | City Recreational Spaces Navigator</title>
     <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
 </head>
 <body>
 
@@ -19,22 +20,19 @@
             <a href="events.html" class="active">Events</a>
         </nav>
         <div class="nav-spacer"></div>
-        <div class="nav-auth">
-            <a class="btn btn-ghost" href="login.html">Sign in</a>
-            <a class="btn btn-primary" href="register.html">Create account</a>
-        </div>
+        <div class="nav-auth"></div>
     </div>
 </header>
 
 <main class="page">
     <div class="page-head">
         <h1>Public events</h1>
-        <p>Community events happening at city recreational spaces. Private and cancelled events are never shown.</p>
+        <p>Community events happening at city recreational spaces. Sign in to RSVP and join discussions (FR-9, FR-10).</p>
     </div>
 
     <div class="guest-banner">
         <span>&#127881;</span>
-        <span><strong>Guest view</strong> &middot; FR-4 (public events), live from the database. No account required.</span>
+        <span><strong>Events &amp; Community Forum</strong> &middot; FR-4 (public events), FR-9 (RSVP attendance), and FR-10 (comments).</span>
     </div>
 
     <section id="events"></section>
@@ -42,7 +40,7 @@
 
 <footer class="site-footer">
     <div class="inner">
-        <p>Guest functional requirements, live against <code>city_recreation</code>.</p>
+        <p>Guest and General User functional requirements, live against <code>city_recreation</code>.</p>
         <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
     </div>
 </footer>
@@ -58,22 +56,27 @@
         return isNaN(d) ? '' : d.getDate();
     }
 
-    // FR-4: public confirmed events as cards.
+    // Load events and overlay RSVP & comments
     async function loadEvents() {
         const host = document.getElementById('events');
         host.innerHTML = '<p class="result-meta">Loading...</p>';
         const data = await fetchFr(4);
 
-        if (data.error) { host.innerHTML = '<div class="card card-pad"><p class="err-state">' + esc(data.error) + '</p></div>'; return; }
+        if (data.error) {
+            host.innerHTML = '<div class="card card-pad"><p class="err-state">' + esc(data.error) + '</p></div>';
+            return;
+        }
 
         let html = '<p class="result-meta">' + data.rowCount + ' public event(s)</p>';
         if (!data.rows || data.rows.length === 0) {
             html += '<p class="empty-state">No public events right now.</p>';
         } else {
-            html += '<div style="display:flex;flex-direction:column;gap:1rem;">';
-            data.rows.forEach(r => {
+            const user = await Auth.getMe();
+            html += '<div style="display:flex;flex-direction:column;gap:1.2rem;">';
+            for (const r of data.rows) {
+                const eid = esc(r.event_id);
                 html += `
-                    <article class="card event-card">
+                    <article class="card event-card" id="event-card-${eid}">
                         <div class="event-when">
                             <span class="mon">${esc(monthAbbr(r.start_time))}</span>
                             <span class="day">${esc(dayNum(r.start_time))}</span>
@@ -85,13 +88,187 @@
                                 ${esc(r.facility_name)} &middot; ${esc(r.space_name)}
                                 &middot; ${formatDateTime(r.start_time)} – ${formatDateTime(r.end_time)}
                             </div>
+
+                            <!-- FR-9: RSVP attendance bar -->
+                            <div class="rsvp-bar" id="rsvp-bar-${eid}">
+                                <div class="rsvp-stats" id="rsvp-stats-${eid}">Loading RSVPs...</div>
+                                <div class="rsvp-actions" id="rsvp-actions-${eid}"></div>
+                            </div>
+
+                            <!-- FR-10: Discussion & Comments -->
+                            <div class="discussion-section">
+                                <button class="discussion-toggle" onclick="toggleComments(${eid})">
+                                    <span>&#128172;</span> <span id="comments-toggle-label-${eid}">Discussion & Comments</span>
+                                </button>
+                                <div id="comments-drawer-${eid}" style="display:none;" class="comments-container">
+                                    <div id="comments-list-${eid}">Loading discussion...</div>
+                                    <div id="comment-form-host-${eid}"></div>
+                                </div>
+                            </div>
+
                         </div>
                     </article>`;
-            });
+            }
             html += '</div>';
         }
         html += sqlDetails(data.sql);
         host.innerHTML = html;
+
+        // Fetch RSVP and discussion states for each rendered card
+        if (data.rows && data.rows.length > 0) {
+            for (const r of data.rows) {
+                loadRsvp(r.event_id);
+            }
+        }
+    }
+
+    // FR-9: Fetch and render RSVP state
+    async function loadRsvp(eventId) {
+        const statsEl = document.getElementById(`rsvp-stats-${eventId}`);
+        const actionsEl = document.getElementById(`rsvp-actions-${eventId}`);
+        if (!statsEl || !actionsEl) return;
+
+        try {
+            const res = await fetch(`api/user/rsvp?event_id=${eventId}`);
+            const data = await res.json();
+            const going = data.goingCount || 0;
+            const maybe = data.maybeCount || 0;
+            statsEl.textContent = `${going} going · ${maybe} maybe`;
+
+            const user = await Auth.getMe();
+            if (user) {
+                const cur = (data.userStatus || '').toUpperCase();
+                actionsEl.innerHTML = `
+                    <button class="rsvp-btn ${cur === 'GOING' ? 'active-going' : ''}" onclick="submitRsvp(${eventId}, 'GOING')">Going</button>
+                    <button class="rsvp-btn ${cur === 'MAYBE' ? 'active-maybe' : ''}" onclick="submitRsvp(${eventId}, 'MAYBE')">Maybe</button>
+                    ${cur ? `<button class="rsvp-btn" onclick="submitRsvp(${eventId}, 'NONE')" style="color:var(--text-faint);">Leave</button>` : ''}
+                `;
+            } else {
+                actionsEl.innerHTML = `<span style="font-size:.8rem;color:var(--text-faint);"><a href="login.html">Sign in</a> to RSVP</span>`;
+            }
+        } catch (err) {
+            statsEl.textContent = 'RSVP info unavailable';
+        }
+    }
+
+    async function submitRsvp(eventId, status) {
+        try {
+            await fetch('api/user/rsvp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId: eventId, status: status })
+            });
+            loadRsvp(eventId);
+        } catch (err) {
+            alert('Failed to update RSVP.');
+        }
+    }
+
+    // FR-10: Toggle and load event comments
+    async function toggleComments(eventId) {
+        const drawer = document.getElementById(`comments-drawer-${eventId}`);
+        if (!drawer) return;
+        if (drawer.style.display === 'none') {
+            drawer.style.display = 'block';
+            loadComments(eventId);
+        } else {
+            drawer.style.display = 'none';
+        }
+    }
+
+    async function loadComments(eventId) {
+        const listEl = document.getElementById(`comments-list-${eventId}`);
+        const formHost = document.getElementById(`comment-form-host-${eventId}`);
+        const labelEl = document.getElementById(`comments-toggle-label-${eventId}`);
+        if (!listEl) return;
+
+        try {
+            const res = await fetch(`api/user/comments?event_id=${eventId}`);
+            const data = await res.json();
+            const comments = data.comments || [];
+            const user = await Auth.getMe();
+            const currentUserId = user ? user.userId : null;
+
+            if (labelEl) {
+                labelEl.textContent = `Discussion (${comments.length})`;
+            }
+
+            if (comments.length === 0) {
+                listEl.innerHTML = '<p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .5rem 0;">No comments yet. Start the discussion!</p>';
+            } else {
+                listEl.innerHTML = comments.map(c => `
+                    <div class="comment-card" id="comment-${c.commentId}">
+                        <div class="comment-meta">
+                            <span class="comment-author">${esc(c.userEmail)}</span>
+                            <span>
+                                ${esc(c.createdTime)}
+                                ${c.userId === currentUserId ? ` &middot; <button class="comment-delete-btn" onclick="deleteComment(${eventId}, ${c.commentId})">Delete</button>` : ''}
+                            </span>
+                        </div>
+                        <div>${esc(c.body)}</div>
+                    </div>
+                `).join('');
+            }
+
+            if (formHost) {
+                if (user) {
+                    formHost.innerHTML = `
+                        <form class="comment-form" onsubmit="postComment(event, ${eventId})">
+                            <input type="text" id="comment-input-${eventId}" placeholder="Add a comment to this event..." required autocomplete="off">
+                            <button type="submit" class="btn btn-primary" style="padding:.45rem .8rem;font-size:.84rem;">Post</button>
+                        </form>
+                    `;
+                } else {
+                    formHost.innerHTML = `
+                        <div style="font-size:.82rem;color:var(--text-muted);margin-top:.5rem;">
+                            <a href="login.html">Sign in</a> to post a comment in this thread.
+                        </div>
+                    `;
+                }
+            }
+        } catch (err) {
+            listEl.innerHTML = '<p class="err-state">Failed to load comments.</p>';
+        }
+    }
+
+    async function postComment(e, eventId) {
+        e.preventDefault();
+        const input = document.getElementById(`comment-input-${eventId}`);
+        if (!input) return;
+        const body = input.value.trim();
+        if (!body) return;
+
+        try {
+            const res = await fetch('api/user/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId: eventId, body: body })
+            });
+            const data = await res.json();
+            if (data.success) {
+                input.value = '';
+                loadComments(eventId);
+            } else {
+                alert(data.error || 'Failed to post comment.');
+            }
+        } catch (err) {
+            alert('Failed to post comment.');
+        }
+    }
+
+    async function deleteComment(eventId, commentId) {
+        if (!confirm('Delete this comment?')) return;
+        try {
+            const res = await fetch(`api/user/comments?comment_id=${commentId}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadComments(eventId);
+            }
+        } catch (err) {
+            alert('Failed to delete comment.');
+        }
     }
 
     window.addEventListener('DOMContentLoaded', loadEvents);
