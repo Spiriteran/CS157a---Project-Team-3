@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussions | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>
+                City Recreational Spaces
+                <small>Find it. Check it. Reserve it.</small>
+            </span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+            <a href="discussions.html" class="active">Discussions</a>
+        </nav>
+
+        <div class="nav-spacer"></div>
+
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="register.html">
+                Create account
+            </a>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="page-head">
+        <h1>Community discussions</h1>
+        <p>
+            Browse conversations connected to public events.
+        </p>
+    </div>
+
+    <div class="guest-banner">
+        <span>&#128172;</span>
+        <span>
+            <strong>Public discussions</strong>
+            · Sign in to participate.
+        </span>
+    </div>
+
+    <section id="discussion-list" aria-live="polite">
+        <p class="result-meta">Loading discussions...</p>
+    </section>
+
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p>
+            Join the conversation around local recreational events.
+        </p>
+        <p style="color:var(--text-faint);">
+            &copy; 2026 City Recreational Spaces Navigator
+        </p>
+    </div>
+</footer>
+
+<script src="js/fr-api.js"></script>
+
+<script>
+async function loadDiscussions() {
+    const host = document.getElementById('discussion-list');
+    const response = await fetch('api/discussions');
+    const data = await response.json();
+
+    if (data.error) {
+        host.innerHTML =
+            '<p class="err-state">' + esc(data.error) + '</p>';
+        return;
+    }
+
+    if (!data.rows || data.rows.length === 0) {
+        host.innerHTML =
+            '<p class="empty-state">No public discussions yet.</p>';
+        return;
+    }
+
+    host.innerHTML =
+        '<p class="result-meta">' +
+        data.rowCount +
+        ' discussion(s)</p>' +
+        '<div class="discussion-list">' +
+        data.rows.map(row => `
+            <article class="card discussion-card">
+                <span class="badge green">
+                    ${esc(row.comment_count)} comments
+                </span>
+
+                <div class="discussion-main">
+                    <h2>${esc(row.title)}</h2>
+                    <p>${esc(row.description || '')}</p>
+                    <div class="discussion-meta">
+                        ${esc(row.facility_name)}
+                        ·
+                        ${esc(row.space_name)}
+                        ·
+                        ${formatDateTime(row.start_time)}
+                    </div>
+                </div>
+
+                <button
+                    class="btn btn-ghost discussion-toggle"
+                    type="button"
+                    data-event-id="${esc(row.event_id)}"
+                    aria-expanded="false">
+                    View discussion
+                </button>
+
+                <div
+                    class="comments"
+                    id="comments-${esc(row.event_id)}">
+                </div>
+            </article>
+        `).join('') +
+        '</div>';
+
+    host.querySelectorAll('.discussion-toggle')
+        .forEach(button => {
+            button.addEventListener('click', () => {
+                loadComments(button);
+            });
+        });
+}
+
+async function loadComments(button) {
+    const eventId = button.dataset.eventId;
+    const comments = document.getElementById('comments-' + eventId);
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+
+    button.setAttribute('aria-expanded', String(!expanded));
+    button.textContent = expanded
+        ? 'View discussion'
+        : 'Hide discussion';
+
+    if (expanded) {
+        comments.innerHTML = '';
+        return;
+    }
+
+    comments.innerHTML =
+        '<p class="result-meta">Loading comments...</p>';
+
+    const response = await fetch(
+        'api/discussions?event_id=' +
+        encodeURIComponent(eventId)
+    );
+
+    const data = await response.json();
+
+    if (data.error) {
+        comments.innerHTML =
+            '<p class="err-state">' + esc(data.error) + '</p>';
+        return;
+    }
+
+    if (!data.rows || data.rows.length === 0) {
+        comments.innerHTML =
+            '<p class="empty-state">No comments yet.</p>';
+        return;
+    }
+
+    comments.innerHTML = data.rows.map(comment => `
+        <div class="comment">
+            <strong>${esc(comment.author)}</strong>
+            <span>${formatDateTime(comment.created_time)}</span>
+            <p>${esc(comment.body)}</p>
+        </div>
+    `).join('');
+}
+
+window.addEventListener('DOMContentLoaded', loadDiscussions);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Recreational Spaces Navigator</title>
+    <meta name="description" content="Find and reserve city recreational spaces. Browse public events and the community forum.">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="register.html">Create account</a>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+
+    <section class="hero">
+        <h1>Welcome to the Navigator</h1>
+        <p>Discover local recreational spaces, join community events, and take part in
+           public discussions. Sign in to reserve, or explore as a guest.</p>
+    </section>
+
+    <div class="split">
+
+        <!-- Login panel (mock) -->
+        <section class="card card-pad">
+            <h2 style="font-size:1.25rem;margin-bottom:1rem;">Member sign in</h2>
+            <div class="demo-note">Demo only — sign-in is not wired to the backend this round.</div>
+            <form onsubmit="event.preventDefault(); return false;">
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Your password" autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+            </form>
+            <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
+                New here? <a href="register.html">Create an account</a>
+            </p>
+            <p style="margin-top:.5rem;font-size:.85rem;text-align:center;color:var(--text-muted);">
+                No account needed to <a href="explore.html">explore spaces</a> or
+                <a href="events.html">view public events</a>.
+            </p>
+        </section>
+
+        <!-- Community forum preview (mock) -->
+        <section class="card card-pad">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;">
+                <h2 style="font-size:1.25rem;">Community forum</h2>
+                <span class="badge slate">preview</span>
+            </div>
+
+            <article class="thread">
+                <h3>Saturday morning basketball tourney</h3>
+                <p>Looking for 2 more players for our 5v5 pickup game this Saturday at Central Park Gym.</p>
+                <div class="byline">Posted by user89 &middot; 2 hours ago</div>
+            </article>
+
+            <article class="thread">
+                <h3>Beginner yoga in the park</h3>
+                <p>Relaxing beginner-friendly session at Mitchell Park. Bring your own mat.</p>
+                <div class="byline">Posted by wellnessgroup &middot; 5 hours ago</div>
+            </article>
+
+            <article class="thread">
+                <h3>Tennis court maintenance update</h3>
+                <p>Courts 1 and 2 at Rivermark will be closed for resurfacing next Tuesday.</p>
+                <div class="byline">Posted by city_admin &middot; 1 day ago</div>
+            </article>
+
+            <button class="btn btn-ghost btn-block" disabled
+                    title="Forum posting is not implemented this round">
+                View all discussions
+            </button>
+        </section>
+
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p><strong>For the grader:</strong> the five guest functional requirements are
+           live against the <code>city_recreation</code> database and need no account.</p>
+        <p>FR-1, FR-2, FR-5 &rarr; <a href="explore.html">Explore</a> &nbsp;|&nbsp;
+           FR-3 &rarr; <a href="availability.html">Availability</a> &nbsp;|&nbsp;
+           FR-4 &rarr; <a href="events.html">Events</a></p>
+        <p style="color:var(--text-faint);margin-top:.5rem;">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+</body>
+</html>

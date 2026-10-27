@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-primary" href="register.html">Create account</a>
+        </div>
+    </div>
+</header>
+
+<main class="page" style="max-width:460px;">
+    <div class="page-head" style="text-align:center;">
+        <h1>Sign in</h1>
+        <p>Welcome back to the Navigator.</p>
+    </div>
+
+    <section class="card card-pad">
+        <div class="demo-note">Demo only — authentication is not implemented this round. The guest functional requirements work without an account.</div>
+        <form onsubmit="event.preventDefault(); document.getElementById('msg').style.display='block';">
+            <div class="field">
+                <label for="email">Email address</label>
+                <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Your password" autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+        </form>
+        <p id="msg" style="display:none;margin-top:1rem;font-size:.88rem;text-align:center;color:var(--text-muted);">
+            This is a mock screen — no session is created.
+            Head to <a href="explore.html">Explore</a> or <a href="events.html">Events</a> to try the live guest features.
+        </p>
+        <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
+            Don't have an account? <a href="register.html">Create one</a>
+        </p>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+</body>
+</html>

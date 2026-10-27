@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="home.html">
+            <span class="mark">&#127795;</span>
+            <span>
+                City Recreational Spaces
+                <small>Find it. Check it. Reserve it.</small>
+            </span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="home.html" class="active">Home</a>
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+            <a href="discussions.html">Discussions</a>
+        </nav>
+
+        <div class="nav-spacer"></div>
+
+        <a class="btn btn-ghost" href="index.html">
+            Public site
+        </a>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="page-head">
+        <h1 id="welcome">Welcome</h1>
+        <p>
+            Here are public events suggested from your preferred area.
+        </p>
+    </div>
+
+    <section class="card card-pad">
+
+        <div class="section-heading">
+            <div>
+                <h2>Suggested events</h2>
+                <p id="area-label" class="result-meta">
+                    Nearby events
+                </p>
+            </div>
+
+            <a class="btn btn-ghost" href="events.html">
+                View all events
+            </a>
+        </div>
+
+        <div id="suggestions" aria-live="polite">
+            <p class="result-meta">Loading suggestions...</p>
+        </div>
+
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p style="color:var(--text-faint);">
+            &copy; 2026 City Recreational Spaces Navigator
+        </p>
+    </div>
+</footer>
+
+<script src="js/fr-api.js"></script>
+
+<script>
+async function loadHome() {
+    const response = await fetch('api/home');
+    const data = await response.json();
+
+    if (response.status === 401) {
+        window.location.href = 'login.html?next=home.html';
+        return;
+    }
+
+    if (data.error) {
+        document.getElementById('suggestions').innerHTML =
+            '<p class="err-state">' + esc(data.error) + '</p>';
+        return;
+    }
+
+    document.getElementById('welcome').textContent =
+        'Welcome ' + data.username;
+
+    document.getElementById('area-label').textContent =
+        'Suggested near ' + data.city;
+
+    if (!data.events || data.events.length === 0) {
+        document.getElementById('suggestions').innerHTML =
+            '<p class="empty-state">No public events are available nearby.</p>';
+        return;
+    }
+
+    document.getElementById('suggestions').innerHTML =
+        '<div class="card-grid">' +
+        data.events.map(event => `
+            <article class="tile">
+                <span class="badge green">Public event</span>
+                <h3>${esc(event.title)}</h3>
+                <p class="meta">
+                    ${esc(event.facility_name)} · ${esc(event.city_name)}
+                </p>
+                <p class="meta">
+                    ${formatDateTime(event.start_time)}
+                    –
+                    ${formatDateTime(event.end_time)}
+                </p>
+                <p class="event-summary">
+                    ${esc(event.description || 'No description provided.')}
+                </p>
+                <a href="discussions.html" class="text-link">
+                    View discussion →
+                </a>
+            </article>
+        `).join('') +
+        '</div>';
+}
+
+window.addEventListener('DOMContentLoaded', loadHome);
+</script>
+
+</body>
+</html>

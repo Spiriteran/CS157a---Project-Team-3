@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Availability | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth">
+            <a class="btn btn-ghost" href="login.html">Sign in</a>
+            <a class="btn btn-primary" href="register.html">Create account</a>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="page-head">
+        <h1>Space availability</h1>
+        <p>Pick a space to see its time slots. A slot shows <strong>Occupied</strong> when a confirmed reservation exists.</p>
+    </div>
+
+    <div class="guest-banner">
+        <span>&#128197;</span>
+        <span><strong>Guest view</strong> &middot; FR-3 (availability by time slot), live from the database. No account required.</span>
+    </div>
+
+    <section class="card card-pad" style="margin-bottom:1.5rem;">
+        <div class="controls">
+            <div class="field">
+                <label for="space">Space</label>
+                <select id="space"><option>Loading spaces...</option></select>
+            </div>
+            <button class="btn btn-primary" onclick="loadAvailability()">Check availability</button>
+        </div>
+    </section>
+
+    <section id="schedule"></section>
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p>Guest functional requirements, live against <code>city_recreation</code>.</p>
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+<script src="js/fr-api.js"></script>
+<script>
+    function queryParam(name) {
+        return new URLSearchParams(window.location.search).get(name);
+    }
+
+    // Populate the space dropdown from FR-5 (gives us id + name + facility).
+    async function populateSpaces() {
+        const sel = document.getElementById('space');
+        const data = await fetchFr(5);
+        if (data.error || !data.rows) { sel.innerHTML = '<option>Could not load spaces</option>'; return; }
+        // FR-5 isn't ordered by id; sort for a sensible dropdown.
+        const rows = data.rows.slice().sort((a, b) => Number(a.space_id) - Number(b.space_id));
+        sel.innerHTML = rows.map(r =>
+            `<option value="${esc(r.space_id)}">#${esc(r.space_id)} — ${esc(r.space_name)} (${esc(r.facility_name)})</option>`
+        ).join('');
+
+        const preset = queryParam('space_id');
+        if (preset) { sel.value = preset; loadAvailability(); }
+    }
+
+    // FR-3: time-slot availability for the chosen space.
+    async function loadAvailability() {
+        const spaceId = document.getElementById('space').value;
+        const host = document.getElementById('schedule');
+        host.innerHTML = '<p class="result-meta">Loading...</p>';
+        const data = await fetchFr(3, { space_id: spaceId });
+
+        if (data.error) { host.innerHTML = '<div class="card card-pad"><p class="err-state">' + esc(data.error) + '</p></div>'; return; }
+
+        let inner = '<p class="result-meta">' + data.rowCount + ' time slot(s) for space #' + esc(spaceId) + '</p>';
+        if (!data.rows || data.rows.length === 0) {
+            inner += '<p class="empty-state">No time slots scheduled for this space.</p>';
+        } else {
+            data.rows.forEach(r => {
+                inner += `
+                    <div class="slot-row">
+                        <span class="slot-time">${formatDateTime(r.start_time)}
+                            <small>until ${formatDateTime(r.end_time)}</small></span>
+                        <span class="badge ${statusClass(r.availability)}">${esc(r.availability)}</span>
+                    </div>`;
+            });
+        }
+        inner += sqlDetails(data.sql);
+        host.innerHTML = '<div class="card card-pad">' + inner + '</div>';
+    }
+
+    window.addEventListener('DOMContentLoaded', populateSpaces);
+</script>
+</body>
+</html>

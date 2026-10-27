@@ -1,0 +1,14 @@
+# Eclipse / IDE metadata
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+
+# Project working docs (not committed)
+PROJECT_PLAN.md
+db_model_design.md
+
+# Maven build output
+target/
