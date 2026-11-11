@@ -1,6 +1,6 @@
 /**
- * auth.js — client-side authentication and session management.
- * Injects session state into the site header and provides auth API helpers.
+ * auth.js — client-side authentication, simulated verification/2FA helpers,
+ * and header session state injection.
  */
 
 const Auth = {
@@ -35,11 +35,38 @@ const Auth = {
         return data;
     },
 
-    async register(email, password, phone, role) {
+    async register(email, password, confirmPassword, phone, role) {
         const res = await fetch('api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, phone, role })
+            body: JSON.stringify({ email, password, confirmPassword, phone, role })
+        });
+        return await res.json();
+    },
+
+    async verifyEmail(email, code) {
+        const res = await fetch('api/auth/verify-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code })
+        });
+        return await res.json();
+    },
+
+    async resendEmailCode(email) {
+        const res = await fetch('api/auth/resend-email-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        return await res.json();
+    },
+
+    async verify2fa(code) {
+        const res = await fetch('api/auth/verify-2fa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
         });
         const data = await res.json();
         if (data.success && data.user) {
@@ -62,9 +89,19 @@ const Auth = {
         const authHost = document.querySelector('.nav-auth');
         const navLinks = document.querySelector('.nav-links');
 
+        if (navLinks && !navLinks.querySelector('a[href="discussions.html"]')) {
+            const discLink = document.createElement('a');
+            discLink.href = 'discussions.html';
+            discLink.textContent = 'Discussions';
+            if (window.location.pathname.endsWith('discussions.html')) {
+                discLink.classList.add('active');
+            }
+            navLinks.appendChild(discLink);
+        }
+
         if (user) {
-            // Update nav-links to include Favorites
-            if (navLinks && !document.getElementById('nav-favorites-link')) {
+            if (navLinks && !document.getElementById('nav-favorites-link')
+                    && !navLinks.querySelector('a[href="favorites.html"]')) {
                 const favLink = document.createElement('a');
                 favLink.id = 'nav-favorites-link';
                 favLink.href = 'favorites.html';
@@ -75,10 +112,10 @@ const Auth = {
                 navLinks.appendChild(favLink);
             }
 
-            // Update authHost with user menu
             if (authHost) {
-                const roleLabel = (user.roleName === 'GENERAL_USER') ? 'General' :
-                                  (user.roleName === 'RESERVATION_USER') ? 'Reservation' : 'Admin';
+                const roleLabel = (user.roleName === 'GENERAL_USER') ? 'General'
+                        : (user.roleName === 'RESERVATION_USER') ? 'Reservation'
+                        : 'Admin';
                 authHost.innerHTML = `
                     <div class="user-chip">
                         <span class="user-chip-name">&#128100; ${this.esc(user.email)}</span>
@@ -89,7 +126,6 @@ const Auth = {
                 `;
             }
         } else {
-            // Guest mode
             if (authHost) {
                 authHost.innerHTML = `
                     <a class="btn btn-ghost" href="login.html">Sign in</a>
@@ -100,7 +136,7 @@ const Auth = {
     },
 
     esc(s) {
-        if (!s) return '';
+        if (s === null || s === undefined) return '';
         return String(s)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');

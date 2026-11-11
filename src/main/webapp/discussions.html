@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussions | City Recreational Spaces Navigator</title>
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/auth.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="inner">
+        <a class="brand" href="index.html">
+            <span class="mark">&#127795;</span>
+            <span>City Recreational Spaces<small>Find it. Check it. Reserve it.</small></span>
+        </a>
+        <nav class="nav-links">
+            <a href="explore.html">Explore</a>
+            <a href="events.html">Events</a>
+            <a href="discussions.html" class="active">Discussions</a>
+        </nav>
+        <div class="nav-spacer"></div>
+        <div class="nav-auth"></div>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="page-head">
+        <h1>Community discussions</h1>
+        <p>Browse conversations connected to public events (live from <code>city_recreation</code>).</p>
+    </div>
+
+    <div class="guest-banner">
+        <span>&#128172;</span>
+        <span><strong>Public discussions</strong> &middot; Anyone can read; sign in to post or delete your own comments (FR-10).</span>
+    </div>
+
+    <section id="discussion-list" aria-live="polite">
+        <p class="result-meta">Loading discussions...</p>
+    </section>
+
+</main>
+
+<footer class="site-footer">
+    <div class="inner">
+        <p>Public event discussions &middot; <a href="events.html">Go to Events &amp; RSVPs</a></p>
+        <p style="color:var(--text-faint);">&copy; 2026 City Recreational Spaces Navigator &middot; Team 3, CS157A</p>
+    </div>
+</footer>
+
+<script src="js/fr-api.js"></script>
+<script>
+    async function loadDiscussions() {
+        const host = document.getElementById('discussion-list');
+        try {
+            const response = await fetch('api/discussions');
+            const data = await response.json();
+
+            if (data.error) {
+                host.innerHTML = '<div class="card card-pad"><p class="err-state">' + esc(data.error) + '</p></div>';
+                return;
+            }
+
+            if (!data.rows || data.rows.length === 0) {
+                host.innerHTML = '<div class="card card-pad"><p class="empty-state">No public discussions yet.</p></div>';
+                return;
+            }
+
+            host.innerHTML =
+                '<p class="result-meta">' + esc(data.rowCount) + ' public discussion(s)</p>' +
+                '<div style="display:flex;flex-direction:column;gap:1.1rem;">' +
+                data.rows.map(row => `
+                    <article class="card card-pad">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;flex-wrap:wrap;">
+                            <div>
+                                <h2 style="font-size:1.18rem;margin-bottom:.25rem;">${esc(row.title)}</h2>
+                                <p style="color:var(--text-muted);font-size:.92rem;margin-bottom:.35rem;">${esc(row.description || '')}</p>
+                                <div style="font-size:.82rem;color:var(--text-faint);">
+                                    ${esc(row.facility_name)} &middot; ${esc(row.space_name)} &middot; ${formatDateTime(row.start_time)}
+                                </div>
+                            </div>
+                            <span class="badge green" id="count-badge-${esc(row.event_id)}">${esc(row.comment_count)} comment(s)</span>
+                        </div>
+
+                        <div class="discussion-section">
+                            <button class="discussion-toggle" type="button" data-event-id="${esc(row.event_id)}" aria-expanded="false">
+                                &#128172; View discussion
+                            </button>
+                            <div class="comments-container" id="comments-${esc(row.event_id)}" style="display:none;"></div>
+                        </div>
+                    </article>
+                `).join('') +
+                '</div>';
+
+            host.querySelectorAll('.discussion-toggle').forEach(button => {
+                button.addEventListener('click', () => toggleDiscussion(button));
+            });
+        } catch (err) {
+            host.innerHTML = '<div class="card card-pad"><p class="err-state">Failed to load discussions.</p></div>';
+        }
+    }
+
+    async function toggleDiscussion(button) {
+        const eventId = button.dataset.eventId;
+        const container = document.getElementById('comments-' + eventId);
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+
+        button.setAttribute('aria-expanded', String(!expanded));
+        button.innerHTML = expanded ? '&#128172; View discussion' : '&#128172; Hide discussion';
+
+        if (expanded) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'block';
+        await loadComments(eventId);
+    }
+
+    async function loadComments(eventId) {
+        const container = document.getElementById('comments-' + eventId);
+        container.innerHTML = '<p class="result-meta">Loading comments...</p>';
+
+        try {
+            const response = await fetch('api/user/comments?event_id=' + encodeURIComponent(eventId));
+            const data = await response.json();
+            const user = await Auth.getMe();
+            const currentUserId = user ? user.userId : null;
+            const comments = data.comments || [];
+
+            const badge = document.getElementById('count-badge-' + eventId);
+            if (badge) {
+                badge.textContent = comments.length + ' comment(s)';
+            }
+
+            let html = '';
+            if (comments.length === 0) {
+                html += '<p style="font-size:.85rem;color:var(--text-muted);margin:0 0 .5rem 0;">No comments yet. Start the discussion!</p>';
+            } else {
+                html += comments.map(c => `
+                    <div class="comment-card">
+                        <div class="comment-meta">
+                            <span class="comment-author">${esc(c.userEmail)}</span>
+                            <span>
+                                ${esc(c.createdTime)}
+                                ${c.userId === currentUserId ? ` &middot; <button class="comment-delete-btn" onclick="deleteComment(${eventId}, ${c.commentId})">Delete</button>` : ''}
+                            </span>
+                        </div>
+                        <div>${esc(c.body)}</div>
+                    </div>
+                `).join('');
+            }
+
+            if (user) {
+                html += `
+                    <form class="comment-form" onsubmit="postComment(event, ${eventId})">
+                        <input type="text" id="disc-input-${eventId}" placeholder="Write a comment..." required autocomplete="off">
+                        <button type="submit" class="btn btn-primary" style="padding:.45rem .8rem;font-size:.84rem;">Post</button>
+                    </form>
+                `;
+            } else {
+                html += `<div style="font-size:.82rem;color:var(--text-muted);margin-top:.5rem;"><a href="login.html?next=discussions.html">Sign in</a> to post a comment.</div>`;
+            }
+
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = '<p class="err-state">Failed to load comments.</p>';
+        }
+    }
+
+    async function postComment(e, eventId) {
+        e.preventDefault();
+        const input = document.getElementById('disc-input-' + eventId);
+        const body = input ? input.value.trim() : '';
+        if (!body) return;
+        const res = await fetch('api/user/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventId: Number(eventId), body: body })
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadComments(eventId);
+        } else {
+            alert(data.error || 'Could not post comment.');
+        }
+    }
+
+    async function deleteComment(eventId, commentId) {
+        if (!confirm('Delete this comment?')) return;
+        const res = await fetch('api/user/comments?comment_id=' + commentId, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            await loadComments(eventId);
+        } else {
+            alert(data.error || 'Could not delete comment.');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadDiscussions);
+</script>
+
+</body>
+</html>
+

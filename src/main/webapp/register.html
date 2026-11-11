@@ -18,6 +18,7 @@
         <nav class="nav-links">
             <a href="explore.html">Explore</a>
             <a href="events.html">Events</a>
+            <a href="discussions.html">Discussions</a>
         </nav>
         <div class="nav-spacer"></div>
         <div class="nav-auth">
@@ -33,34 +34,55 @@
     </div>
 
     <section class="card card-pad">
-        <div id="error-box" class="err-state" style="display:none;margin-bottom:1rem;padding:.6rem .8rem;background:#fee2e2;border:1px solid #f87171;border-radius:var(--radius);font-size:.85rem;color:#b91c1c;"></div>
+        <div id="status-box" style="display:none;margin-bottom:1rem;padding:.65rem .85rem;border-radius:var(--radius);font-size:.86rem;"></div>
 
         <form id="reg-form">
             <div class="field">
                 <label for="email">Email address</label>
-                <input type="email" id="email" placeholder="you@example.com" required autocomplete="off">
+                <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
             </div>
             <div class="field">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Choose a password" required autocomplete="off">
+                <label for="password">Password (at least 8 characters)</label>
+                <input type="password" id="password" placeholder="Choose a password" minlength="8" required autocomplete="new-password">
             </div>
             <div class="field">
                 <label for="confirm">Confirm password</label>
-                <input type="password" id="confirm" placeholder="Re-enter your password" required autocomplete="off">
+                <input type="password" id="confirm" placeholder="Re-enter your password" minlength="8" required autocomplete="new-password">
             </div>
             <div class="field">
-                <label for="phone">Phone number (for 2FA verification)</label>
-                <input type="tel" id="phone" placeholder="555-123-4567" autocomplete="off">
+                <label for="phone">Phone number (used for 2FA on Reservation accounts)</label>
+                <input type="tel" id="phone" placeholder="555-123-4567" autocomplete="tel">
             </div>
             <div class="field">
                 <label for="role">Account type</label>
                 <select id="role">
                     <option value="GENERAL_USER">General user — browse, favorite, join events, comment</option>
-                    <option value="RESERVATION_USER">Reservation user — also reserve spaces (needs 2FA + billing)</option>
+                    <option value="RESERVATION_USER">Reservation user — also enables 2FA &amp; space reservations</option>
                 </select>
             </div>
             <button type="submit" id="submit-btn" class="btn btn-primary btn-block">Create account</button>
         </form>
+
+        <!-- Step 2: Simulated Email Verification -->
+        <form id="verify-email-form" style="display:none;">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:.85rem;border-radius:var(--radius);font-size:.88rem;margin-bottom:1rem;">
+                <strong>Simulated Email Inbox</strong><br>
+                <span id="demo-email-banner"></span>
+            </div>
+            <div class="field">
+                <label for="email-code">Enter 4-digit verification code</label>
+                <input type="text" id="email-code" maxlength="6" placeholder="4-digit code" required>
+            </div>
+            <div style="display:flex;gap:.5rem;">
+                <button type="submit" id="verify-btn" class="btn btn-primary" style="flex:1;">Verify Email</button>
+                <button type="button" id="resend-btn" class="btn btn-ghost">Resend Code</button>
+            </div>
+        </form>
+
+        <div id="verified-done" style="display:none;text-align:center;padding:.8rem 0;">
+            <p style="margin-bottom:1rem;color:var(--text-muted);">Your account is verified and ready to sign in.</p>
+            <a id="goto-login-btn" class="btn btn-primary btn-block" href="login.html">Continue to Sign in</a>
+        </div>
 
         <p style="margin-top:1.2rem;font-size:.88rem;text-align:center;">
             Already have an account? <a href="login.html">Sign in</a>
@@ -75,11 +97,27 @@
 </footer>
 
 <script>
+    let registeredEmail = '';
+
+    function showStatus(msg, isError) {
+        const box = document.getElementById('status-box');
+        box.textContent = msg;
+        box.style.display = 'block';
+        if (isError) {
+            box.style.background = '#fee2e2';
+            box.style.border = '1px solid #f87171';
+            box.style.color = '#b91c1c';
+        } else {
+            box.style.background = '#ecfdf5';
+            box.style.border = '1px solid #a7f3d0';
+            box.style.color = '#065f46';
+        }
+    }
+
     document.getElementById('reg-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const errBox = document.getElementById('error-box');
         const btn = document.getElementById('submit-btn');
-        errBox.style.display = 'none';
+        document.getElementById('status-box').style.display = 'none';
 
         const email = document.getElementById('email').value.trim();
         const pass = document.getElementById('password').value;
@@ -87,9 +125,12 @@
         const phone = document.getElementById('phone').value.trim();
         const role = document.getElementById('role').value;
 
+        if (pass.length < 8) {
+            showStatus('Password must be at least 8 characters.', true);
+            return;
+        }
         if (pass !== confirm) {
-            errBox.textContent = 'Passwords do not match.';
-            errBox.style.display = 'block';
+            showStatus('Passwords do not match.', true);
             return;
         }
 
@@ -97,20 +138,68 @@
         btn.textContent = 'Creating account...';
 
         try {
-            const res = await Auth.register(email, pass, phone, role);
-            if (res.success) {
-                window.location.href = 'profile.html';
+            const res = await Auth.register(email, pass, confirm, phone, role);
+            if (res.success && res.requiresEmailVerification) {
+                registeredEmail = res.email || email;
+                showStatus(res.message, false);
+                document.getElementById('reg-form').style.display = 'none';
+                document.getElementById('demo-email-banner').innerHTML =
+                    'Verification email for <strong>' + Auth.esc(registeredEmail) +
+                    '</strong><br>Demo verification code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('email-code').value = res.code || '';
+                document.getElementById('verify-email-form').style.display = 'block';
+            } else if (res.success) {
+                window.location.href = 'login.html';
             } else {
-                errBox.textContent = res.error || 'Registration failed.';
-                errBox.style.display = 'block';
+                showStatus(res.error || 'Registration failed.', true);
                 btn.disabled = false;
                 btn.textContent = 'Create account';
             }
         } catch (err) {
-            errBox.textContent = 'Server connection error.';
-            errBox.style.display = 'block';
+            showStatus('Server connection error.', true);
             btn.disabled = false;
             btn.textContent = 'Create account';
+        }
+    });
+
+    document.getElementById('verify-email-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('verify-btn');
+        const code = document.getElementById('email-code').value.trim();
+        btn.disabled = true;
+        try {
+            const res = await Auth.verifyEmail(registeredEmail, code);
+            if (res.success) {
+                showStatus(res.message, false);
+                document.getElementById('verify-email-form').style.display = 'none';
+                document.getElementById('goto-login-btn').href =
+                    'login.html?verified=1&email=' + encodeURIComponent(registeredEmail);
+                document.getElementById('verified-done').style.display = 'block';
+            } else {
+                showStatus(res.error || 'Invalid verification code.', true);
+            }
+        } catch (err) {
+            showStatus('Server connection error.', true);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    document.getElementById('resend-btn').addEventListener('click', async () => {
+        if (!registeredEmail) return;
+        try {
+            const res = await Auth.resendEmailCode(registeredEmail);
+            if (res.success) {
+                document.getElementById('demo-email-banner').innerHTML =
+                    'New verification email for <strong>' + Auth.esc(registeredEmail) +
+                    '</strong><br>Demo verification code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('email-code').value = res.code || '';
+                showStatus(res.message, false);
+            } else {
+                showStatus(res.error || 'Could not resend code.', true);
+            }
+        } catch (err) {
+            showStatus('Server connection error.', true);
         }
     });
 </script>

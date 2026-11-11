@@ -18,6 +18,7 @@
         <nav class="nav-links">
             <a href="explore.html">Explore</a>
             <a href="events.html">Events</a>
+            <a href="discussions.html">Discussions</a>
         </nav>
         <div class="nav-spacer"></div>
         <div class="nav-auth">
@@ -26,33 +27,65 @@
     </div>
 </header>
 
-<main class="page" style="max-width:460px;">
+<main class="page" style="max-width:480px;">
     <div class="page-head" style="text-align:center;">
         <h1>Sign in</h1>
         <p>Welcome back to the Navigator.</p>
     </div>
 
     <section class="card card-pad">
-        <div id="error-box" class="err-state" style="display:none;margin-bottom:1rem;padding:.6rem .8rem;background:#fee2e2;border:1px solid #f87171;border-radius:var(--radius);font-size:.85rem;color:#b91c1c;"></div>
+        <div id="status-box" style="display:none;margin-bottom:1rem;padding:.65rem .85rem;border-radius:var(--radius);font-size:.86rem;"></div>
 
+        <!-- Step 1: Credentials -->
         <form id="login-form">
             <div class="field">
                 <label for="email">Email address</label>
-                <input type="email" id="email" placeholder="you@example.com" required autocomplete="off">
+                <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
             </div>
             <div class="field">
                 <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Your password" required autocomplete="off">
+                <input type="password" id="password" placeholder="Your password" required autocomplete="current-password">
             </div>
             <button type="submit" id="submit-btn" class="btn btn-primary btn-block">Sign in</button>
         </form>
 
+        <!-- Step 2a: Demo Email Verification (if user.email_verified == FALSE) -->
+        <form id="verify-email-form" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:.75rem;border-radius:var(--radius);font-size:.86rem;margin-bottom:.9rem;">
+                <strong>Simulated Email Inbox</strong><br>
+                <span id="demo-email-banner"></span>
+            </div>
+            <div class="field">
+                <label for="email-code">Email verification code</label>
+                <input type="text" id="email-code" maxlength="6" placeholder="4-digit code" required>
+            </div>
+            <div style="display:flex;gap:.5rem;">
+                <button type="submit" id="verify-email-btn" class="btn btn-primary" style="flex:1;">Verify Email &amp; Continue</button>
+                <button type="button" id="resend-email-btn" class="btn btn-ghost">Resend</button>
+            </div>
+        </form>
+
+        <!-- Step 2b: Demo 2FA Verification (if user.twofa_enabled == TRUE) -->
+        <form id="verify-2fa-form" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);">
+            <div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:.75rem;border-radius:var(--radius);font-size:.86rem;margin-bottom:.9rem;">
+                <strong>Simulated Phone 2FA</strong><br>
+                <span id="demo-2fa-banner"></span>
+            </div>
+            <div class="field">
+                <label for="twofa-code">2FA verification code</label>
+                <input type="text" id="twofa-code" maxlength="6" placeholder="4-digit code" required>
+            </div>
+            <button type="submit" id="verify-2fa-btn" class="btn btn-primary btn-block">Verify 2FA &amp; Sign in</button>
+        </form>
+
         <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.82rem;color:var(--text-muted);">
-            <div style="font-weight:600;margin-bottom:.3rem;color:var(--text);">Quick Demo Logins (from seed data):</div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem;">
-                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user1@example.com', 'password123')">user1 (General)</button>
-                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user4@example.com', 'password123')">user4 (General)</button>
-                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user2@example.com', 'password123')">user2 (Reservation)</button>
+            <div style="font-weight:600;margin-bottom:.35rem;color:var(--text);">Quick Demo Logins (from <code>schema.sql</code> seed data):</div>
+            <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.4rem;">
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user5@example.com', 'hashedpwd6')">user5 (General)</button>
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user3@example.com', 'hashedpwd3')">user3 (Reservation)</button>
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user2@example.com', 'hashedpwd2')">user2 (Reservation + 2FA)</button>
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('user4@example.com', 'hashedpwd5')">user4 (Unverified)</button>
+                <button type="button" class="btn btn-ghost" style="padding:.25rem .5rem;font-size:.78rem;" onclick="fillLogin('admin1@example.com', 'hashedpwd4')">admin1 (Admin + 2FA)</button>
             </div>
         </div>
 
@@ -69,37 +102,154 @@
 </footer>
 
 <script>
+    let pendingEmail = '';
+    let pendingPassword = '';
+
+    function showStatus(msg, isError) {
+        const box = document.getElementById('status-box');
+        box.textContent = msg;
+        box.style.display = 'block';
+        if (isError) {
+            box.style.background = '#fee2e2';
+            box.style.border = '1px solid #f87171';
+            box.style.color = '#b91c1c';
+        } else {
+            box.style.background = '#ecfdf5';
+            box.style.border = '1px solid #a7f3d0';
+            box.style.color = '#065f46';
+        }
+    }
+
+    function hideStatus() {
+        document.getElementById('status-box').style.display = 'none';
+    }
+
     function fillLogin(email, pass) {
         document.getElementById('email').value = email;
         document.getElementById('password').value = pass;
+        document.getElementById('verify-email-form').style.display = 'none';
+        document.getElementById('verify-2fa-form').style.display = 'none';
+        hideStatus();
+    }
+
+    function redirectAfterLogin() {
+        const next = new URLSearchParams(window.location.search).get('next') || 'explore.html';
+        window.location.href = next;
+    }
+
+    async function submitCredentials(email, password) {
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+        hideStatus();
+
+        try {
+            const res = await Auth.login(email, password);
+            if (res.requiresEmailVerification) {
+                pendingEmail = res.email || email;
+                pendingPassword = password;
+                showStatus(res.error || 'Verify your email before signing in.', true);
+                document.getElementById('demo-email-banner').innerHTML =
+                    'Verification email for <strong>' + Auth.esc(pendingEmail) +
+                    '</strong> &mdash; Demo code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('email-code').value = res.code || '';
+                document.getElementById('verify-email-form').style.display = 'block';
+                document.getElementById('verify-2fa-form').style.display = 'none';
+                return;
+            }
+            if (res.requires2fa) {
+                showStatus(res.message || '2FA code required.', false);
+                document.getElementById('demo-2fa-banner').innerHTML =
+                    'Demo 2FA SMS code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('twofa-code').value = res.code || '';
+                document.getElementById('verify-2fa-form').style.display = 'block';
+                document.getElementById('verify-email-form').style.display = 'none';
+                return;
+            }
+            if (res.success) {
+                redirectAfterLogin();
+            } else {
+                showStatus(res.error || 'Failed to sign in.', true);
+            }
+        } catch (err) {
+            showStatus('Server connection error.', true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Sign in';
+        }
     }
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const errBox = document.getElementById('error-box');
-        const btn = document.getElementById('submit-btn');
-        errBox.style.display = 'none';
-        btn.disabled = true;
-        btn.textContent = 'Signing in...';
-
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
+        await submitCredentials(email, password);
+    });
 
+    document.getElementById('verify-email-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('verify-email-btn');
+        const code = document.getElementById('email-code').value.trim();
+        btn.disabled = true;
         try {
-            const res = await Auth.login(email, password);
+            const res = await Auth.verifyEmail(pendingEmail, code);
             if (res.success) {
-                window.location.href = 'explore.html';
+                document.getElementById('verify-email-form').style.display = 'none';
+                await submitCredentials(pendingEmail, pendingPassword);
             } else {
-                errBox.textContent = res.error || 'Failed to sign in.';
-                errBox.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Sign in';
+                showStatus(res.error || 'Invalid verification code.', true);
             }
         } catch (err) {
-            errBox.textContent = 'Server connection error.';
-            errBox.style.display = 'block';
+            showStatus('Server connection error.', true);
+        } finally {
             btn.disabled = false;
-            btn.textContent = 'Sign in';
+        }
+    });
+
+    document.getElementById('resend-email-btn').addEventListener('click', async () => {
+        if (!pendingEmail) return;
+        try {
+            const res = await Auth.resendEmailCode(pendingEmail);
+            if (res.success) {
+                document.getElementById('demo-email-banner').innerHTML =
+                    'New verification email for <strong>' + Auth.esc(pendingEmail) +
+                    '</strong> &mdash; Demo code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('email-code').value = res.code || '';
+                showStatus(res.message, false);
+            } else {
+                showStatus(res.error || 'Could not resend code.', true);
+            }
+        } catch (err) {
+            showStatus('Server connection error.', true);
+        }
+    });
+
+    document.getElementById('verify-2fa-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('verify-2fa-btn');
+        const code = document.getElementById('twofa-code').value.trim();
+        btn.disabled = true;
+        try {
+            const res = await Auth.verify2fa(code);
+            if (res.success) {
+                redirectAfterLogin();
+            } else {
+                showStatus(res.error || 'Invalid 2FA code.', true);
+            }
+        } catch (err) {
+            showStatus('Server connection error.', true);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('email')) {
+            document.getElementById('email').value = params.get('email');
+        }
+        if (params.get('verified') === '1') {
+            showStatus('Email verified! You can sign in now.', false);
         }
     });
 </script>

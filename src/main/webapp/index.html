@@ -19,6 +19,7 @@
         <nav class="nav-links">
             <a href="explore.html">Explore</a>
             <a href="events.html">Events</a>
+            <a href="discussions.html">Discussions</a>
         </nav>
         <div class="nav-spacer"></div>
         <div class="nav-auth"></div>
@@ -48,16 +49,37 @@
                 <form id="home-login-form">
                     <div class="field">
                         <label for="home-email">Email address</label>
-                        <input type="email" id="home-email" placeholder="you@example.com" required autocomplete="off">
+                        <input type="email" id="home-email" placeholder="you@example.com" required autocomplete="email">
                     </div>
                     <div class="field">
                         <label for="home-pass">Password</label>
-                        <input type="password" id="home-pass" placeholder="Your password" required autocomplete="off">
+                        <input type="password" id="home-pass" placeholder="Your password" required autocomplete="current-password">
                     </div>
                     <button type="submit" id="home-login-btn" class="btn btn-primary btn-block">Sign in</button>
                 </form>
+
+                <form id="home-2fa-form" style="display:none;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line);">
+                    <div id="home-2fa-banner" style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:.6rem;border-radius:var(--radius);font-size:.82rem;margin-bottom:.75rem;"></div>
+                    <div class="field">
+                        <label for="home-2fa-code">2FA code</label>
+                        <input type="text" id="home-2fa-code" maxlength="6" placeholder="4-digit code" required>
+                    </div>
+                    <button type="submit" id="home-2fa-btn" class="btn btn-primary btn-block">Verify 2FA &amp; Sign in</button>
+                </form>
+
+                <form id="home-email-verify-form" style="display:none;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line);">
+                    <div id="home-email-banner" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:.6rem;border-radius:var(--radius);font-size:.82rem;margin-bottom:.75rem;"></div>
+                    <div class="field">
+                        <label for="home-email-code">Email verification code</label>
+                        <input type="text" id="home-email-code" maxlength="6" placeholder="4-digit code" required>
+                    </div>
+                    <button type="submit" id="home-email-verify-btn" class="btn btn-primary btn-block">Verify Email &amp; Sign in</button>
+                </form>
+
                 <div style="margin-top:.8rem;font-size:.8rem;color:var(--text-muted);text-align:center;">
-                    Demo: <a href="javascript:void(0)" onclick="fillHome('user1@example.com', 'password123')">user1@example.com</a>
+                    Demo:
+                    <a href="javascript:void(0)" onclick="fillHome('user5@example.com', 'hashedpwd6')">user5 (General)</a> &middot;
+                    <a href="javascript:void(0)" onclick="fillHome('user2@example.com', 'hashedpwd2')">user2 (Reservation + 2FA)</a>
                 </div>
                 <p style="margin-top:1rem;font-size:.88rem;text-align:center;">
                     New here? <a href="register.html">Create an account</a>
@@ -100,9 +122,10 @@
                 <div class="byline">Rivermark Park &middot; Discussion active</div>
             </article>
 
-            <a class="btn btn-ghost btn-block" href="events.html" style="text-align:center;margin-top:1rem;">
-                View all events &amp; discussions &rarr;
-            </a>
+            <div style="display:flex;gap:.5rem;margin-top:1rem;">
+                <a class="btn btn-ghost" style="flex:1;text-align:center;" href="discussions.html">All discussions</a>
+                <a class="btn btn-ghost" style="flex:1;text-align:center;" href="events.html">Events &amp; RSVPs &rarr;</a>
+            </div>
         </section>
 
     </div>
@@ -113,7 +136,8 @@
         <p><strong>Implemented functional requirements:</strong></p>
         <p>Guest view &rarr; <a href="explore.html">Explore</a> &nbsp;|&nbsp;
            <a href="availability.html">Availability</a> &nbsp;|&nbsp;
-           <a href="events.html">Events</a></p>
+           <a href="events.html">Events</a> &nbsp;|&nbsp;
+           <a href="discussions.html">Discussions</a></p>
         <p>General User tier &rarr; <a href="profile.html">Profile &amp; Preferences (FR-7)</a> &nbsp;|&nbsp;
            <a href="favorites.html">Favorites (FR-8)</a> &nbsp;|&nbsp;
            <a href="events.html">RSVP &amp; Comments (FR-9, FR-10)</a></p>
@@ -122,9 +146,15 @@
 </footer>
 
 <script>
+    let homePendingEmail = '';
+    let homePendingPassword = '';
+
     function fillHome(email, pass) {
         document.getElementById('home-email').value = email;
         document.getElementById('home-pass').value = pass;
+        document.getElementById('home-2fa-form').style.display = 'none';
+        document.getElementById('home-email-verify-form').style.display = 'none';
+        document.getElementById('home-login-err').style.display = 'none';
     }
 
     async function syncHomeState() {
@@ -139,19 +169,32 @@
         }
     }
 
-    document.getElementById('home-login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    async function doHomeLogin(email, password) {
         const err = document.getElementById('home-login-err');
         const btn = document.getElementById('home-login-btn');
         err.style.display = 'none';
         btn.disabled = true;
 
-        const email = document.getElementById('home-email').value;
-        const password = document.getElementById('home-pass').value;
-
         try {
             const res = await Auth.login(email, password);
-            if (res.success) {
+            if (res.requiresEmailVerification) {
+                homePendingEmail = res.email || email;
+                homePendingPassword = password;
+                err.textContent = res.error || 'Verify your email before signing in.';
+                err.style.display = 'block';
+                document.getElementById('home-email-banner').innerHTML =
+                    'Simulated email for <strong>' + Auth.esc(homePendingEmail) +
+                    '</strong> &mdash; Code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('home-email-code').value = res.code || '';
+                document.getElementById('home-email-verify-form').style.display = 'block';
+                document.getElementById('home-2fa-form').style.display = 'none';
+            } else if (res.requires2fa) {
+                document.getElementById('home-2fa-banner').innerHTML =
+                    'Simulated SMS 2FA code: <code>' + Auth.esc(res.code) + '</code>';
+                document.getElementById('home-2fa-code').value = res.code || '';
+                document.getElementById('home-2fa-form').style.display = 'block';
+                document.getElementById('home-email-verify-form').style.display = 'none';
+            } else if (res.success) {
                 syncHomeState();
                 Auth.updateHeader();
             } else {
@@ -163,6 +206,54 @@
             err.style.display = 'block';
         } finally {
             btn.disabled = false;
+        }
+    }
+
+    document.getElementById('home-login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('home-email').value.trim();
+        const password = document.getElementById('home-pass').value;
+        await doHomeLogin(email, password);
+    });
+
+    document.getElementById('home-2fa-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('home-login-err');
+        const code = document.getElementById('home-2fa-code').value.trim();
+        err.style.display = 'none';
+        try {
+            const res = await Auth.verify2fa(code);
+            if (res.success) {
+                document.getElementById('home-2fa-form').style.display = 'none';
+                syncHomeState();
+                Auth.updateHeader();
+            } else {
+                err.textContent = res.error || 'Invalid 2FA code';
+                err.style.display = 'block';
+            }
+        } catch (ex) {
+            err.textContent = 'Server error';
+            err.style.display = 'block';
+        }
+    });
+
+    document.getElementById('home-email-verify-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('home-login-err');
+        const code = document.getElementById('home-email-code').value.trim();
+        err.style.display = 'none';
+        try {
+            const res = await Auth.verifyEmail(homePendingEmail, code);
+            if (res.success) {
+                document.getElementById('home-email-verify-form').style.display = 'none';
+                await doHomeLogin(homePendingEmail, homePendingPassword);
+            } else {
+                err.textContent = res.error || 'Invalid verification code';
+                err.style.display = 'block';
+            }
+        } catch (ex) {
+            err.textContent = 'Server error';
+            err.style.display = 'block';
         }
     });
 

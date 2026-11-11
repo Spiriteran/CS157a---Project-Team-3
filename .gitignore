@@ -9,6 +9,8 @@
 # Project working docs (not committed)
 PROJECT_PLAN.md
 db_model_design.md
+CODE_EXPLANATION.md
+GENERAL_USER_SQL_PROPOSAL.md
 
 # Maven build output
 target/

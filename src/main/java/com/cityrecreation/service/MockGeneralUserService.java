@@ -134,6 +134,20 @@ public class MockGeneralUserService implements GeneralUserService {
     }
 
     @Override
+    public boolean markEmailVerified(String email) {
+        User u = findByEmail(email);
+        if (u == null) return false;
+        u.setEmailVerified(true);
+        return true;
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        if (email == null) return null;
+        return usersByEmail.get(email.trim().toLowerCase());
+    }
+
+    @Override
     public User findById(int userId) {
         return usersById.get(userId);
     }

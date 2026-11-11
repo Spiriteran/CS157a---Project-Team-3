@@ -1,9 +1,3 @@
--- "General User View" functional reqs
--- registered user, email verified
---
--- run against the schema in schema.sql:
--- mysql -u root city_recreation < functional_requirements.sql
-
 USE city_recreation;
 
 -- user sign in, check email and password hash
@@ -35,7 +29,7 @@ FROM PREFERENCE p
 LEFT JOIN CITY c ON c.city_id = p.default_city_id
 WHERE p.user_id = 1;
 
--- edit preferences (upsert if already exists)
+-- edit preferences (update or insert if already exists)
 INSERT INTO PREFERENCE (user_id, default_city_id, default_sport, map_radius, notify_pref, calendar_view)
 VALUES (1, 1, 'Soccer', 10, 'EMAIL', 'MONTH')
 ON DUPLICATE KEY UPDATE
@@ -102,6 +96,10 @@ ORDER BY c.created_time;
 INSERT INTO COMMENT (event_id, user_id, body, created_time)
 VALUES (1, 1, 'Looking forward to this game!', NOW());
 
--- delete own comment, cannot delete other people's comments
+-- remove attached images on owned comment first so the IMAGE foreign key does not block deletion
+DELETE i FROM IMAGE i
+JOIN COMMENT c ON c.comment_id = i.comment_id
+WHERE c.comment_id = 1 AND c.user_id = 1;
+
 DELETE FROM COMMENT
 WHERE comment_id = 1 AND user_id = 1;

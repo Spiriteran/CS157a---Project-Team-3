@@ -22,6 +22,10 @@ public interface GeneralUserService {
 
     User register(String email, String password, String phoneNum, String roleName);
 
+    boolean markEmailVerified(String email);
+
+    User findByEmail(String email);
+
     User findById(int userId);
 
     Preference getPreferences(int userId);

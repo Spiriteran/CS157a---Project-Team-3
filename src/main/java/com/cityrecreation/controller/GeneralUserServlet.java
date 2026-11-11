@@ -146,10 +146,13 @@ public class GeneralUserServlet extends HttpServlet {
             p.setCalendarView(json.get("calendarView").getAsString());
         }
 
-        userService.updatePreferences(userId, p);
+        if (!userService.updatePreferences(userId, p)) {
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to save preferences.");
+            return;
+        }
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("success", true);
-        out.put("preference", p);
+        out.put("preference", userService.getPreferences(userId));
         resp.getWriter().write(gson.toJson(out));
     }
 
@@ -398,10 +401,14 @@ public class GeneralUserServlet extends HttpServlet {
     // ----- Helpers -----
     private Integer getSessionUserId(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        if (session != null && session.getAttribute(SESSION_USER_ID) != null) {
-            return (Integer) session.getAttribute(SESSION_USER_ID);
+        if (session == null) {
+            return null;
         }
-        return null;
+        Object raw = session.getAttribute(SESSION_USER_ID);
+        if (raw == null) {
+            raw = session.getAttribute("userId");
+        }
+        return raw instanceof Integer ? (Integer) raw : null;
     }
 
     private JsonObject parseBody(HttpServletRequest req) {
